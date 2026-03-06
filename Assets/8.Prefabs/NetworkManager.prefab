@@ -75,4 +75,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   runnerPrefab: {fileID: 4543180152512911853}
   playerPrefab: {fileID: 5375815883232576330, guid: c93f61f515c98954c97ec4c76663e42f, type: 3}
+  gameManagerPrefab: {fileID: 7523114567960875267, guid: f413df310ba8a984f80282becb678048, type: 3}
   gameSceneName: GameScene

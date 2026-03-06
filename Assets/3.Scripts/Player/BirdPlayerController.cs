@@ -1,5 +1,6 @@
 using System;
 using Bird.Network.Data;
+using Bird.Network.Managers;
 using Bird.Network.UI;
 using Fusion;
 using UnityEngine;
@@ -71,9 +72,51 @@ namespace Bird.Network.Player
                     transform.forward = moveDirection;
                 }
             }
+            
+            UpdatePlayerBehaviourByPhase();
+        }
+
+        private void UpdatePlayerBehaviourByPhase()
+        {
+            if (BirdGameManager.Instance == null) return;
+            if (!BirdGameManager.Instance.Object || !BirdGameManager.Instance.Object.IsValid) return;
+
+            bool isSeeker = Runner.LocalPlayer == BirdGameManager.Instance.Seeker;
+
+            if (BirdGameManager.Instance.CurrentPhase == GamePhase.Ready)
+            {
+                if (isSeeker)
+                {
+                    // 술래는 맵을 미리 정찰할 수 있지만, 도망자들이 보이지 않아야 함
+                    ApplySeekerVision(true);
+                }
+                else
+                {
+                    ApplySeekerVision(false);
+                }
+            }
+            else if (BirdGameManager.Instance.CurrentPhase == GamePhase.Hide)
+            {
+                // 술래 시야 복구
+                ApplySeekerVision(false);
+            }
+        }
+
+        private void ApplySeekerVision(bool isReadyPhase)
+        {
+            if (!HasInputAuthority) return;
+            
+            int propLayer = LayerMask.NameToLayer("PropPlayer");
+            if (isReadyPhase)
+            {
+                Camera.main.cullingMask &= ~(1 << propLayer); // TODO ::: 나중에 플레이어들에게 propLayer를 추가할 예정입니다.
+            }
+            else
+            {
+                Camera.main.cullingMask |= (1 << propLayer);
+            }
         }
     }
-
 }
 
 /*

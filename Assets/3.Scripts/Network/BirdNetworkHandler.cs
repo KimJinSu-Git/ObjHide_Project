@@ -16,6 +16,7 @@ namespace Bird.Network.Handlers
     {
         [SerializeField] private NetworkRunner runnerPrefab;
         [SerializeField] private NetworkObject playerPrefab;
+        [SerializeField] private NetworkObject gameManagerPrefab;
         [SerializeField] private string gameSceneName = "GameScene"; // 유니티 빌드 설정에 등록된 게임 씬 인덱스나 이름
         private NetworkRunner currentRunner;
         
@@ -102,6 +103,15 @@ namespace Bird.Network.Handlers
             // Fusion 엔진에 입력값 전달
             input.Set(data);
         }
+
+        public void OnSceneLoadDone(NetworkRunner runner)
+        {
+            // 호스트만 게임 매니저를 생성하겠습니다.
+            if (runner.IsServer)
+            {
+                runner.Spawn(gameManagerPrefab, Vector3.zero, Quaternion.identity);
+            }
+        }
         
         public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
 
@@ -131,9 +141,6 @@ namespace Bird.Network.Handlers
 
         public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }
 
-        public void OnSceneLoadDone(NetworkRunner runner) { }
-
         public void OnSceneLoadStart(NetworkRunner runner) { }
     }
-
 }
