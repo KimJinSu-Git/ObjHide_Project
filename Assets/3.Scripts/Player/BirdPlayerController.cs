@@ -9,12 +9,16 @@ namespace Bird.Network.Player
 {
     public class BirdPlayerController : NetworkBehaviour
     {
+        [SerializeField] private PropDatabase propDatabase;
+        [SerializeField] private Transform meshContainer; // 모델링이 생성될 부모 오브젝트
         [SerializeField] private float moveSpeed = 5f;
         [SerializeField] private Vector3 cameraOffset = new Vector3(0, 3, -6); // 카메라 위치 오프셋
         
         private CharacterController controller;
         private Camera mainCamera;
 
+        [Networked] public int CurrentPropID { get; set; } = -1; // -1은 기본 상태
+        
         public override void Spawned()
         {
             controller = GetComponent<CharacterController>();
@@ -25,6 +29,13 @@ namespace Bird.Network.Player
             {
                 Debug.Log("[Bird] 내 캐릭터 카메라 설정 완료");
             }
+        }
+
+        // 변수 값이 바뀌었을 때 실행될 콜백 (Fusion 2 스타일입니다)
+        public override void Render()
+        {
+            // 이전 프레임과 값이 다를 때만 외형 업데이트
+            UpdateAppearance();
         }
 
         private void LateUpdate()
@@ -74,6 +85,27 @@ namespace Bird.Network.Player
             }
             
             UpdatePlayerBehaviourByPhase();
+        }
+
+        private void UpdateAppearance()
+        {
+            // 기존 매쉬 자식들을 모두 제거
+            foreach (Transform child in meshContainer) Destroy(child.gameObject);
+
+            // ID가 -1이면 기본 외형 표시
+            if (CurrentPropID == -1) return;
+            
+            var data = propDatabase.GetPropByID(CurrentPropID);
+            if (data != null)
+            {
+                // 모델 생성
+                Instantiate(data.PropPrefab, meshContainer);
+                
+                // 크기 조정
+                controller.center = data.Center;
+                controller.height = data.Height;
+                controller.radius = data.Radius;
+            }
         }
 
         private void UpdatePlayerBehaviourByPhase()
