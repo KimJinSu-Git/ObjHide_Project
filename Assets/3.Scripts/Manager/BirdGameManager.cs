@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Bird.Network.UI;
 using Fusion;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -28,6 +29,20 @@ namespace Bird.Network.Managers
         {
             Instance = this;
             Debug.Log("[Bird] 게임 매니저 네트워크 스폰 완료");
+        }
+
+        /// <summary>
+        /// 페이즈가 변경되었을 때 실행할 로직 (클라이언트 측 가시성 제어)
+        /// </summary>
+        public override void Render()
+        {
+            var uiHandler = FindObjectOfType<PropSelectionUIHandler>();
+            if (uiHandler == null) return;
+
+            // 내가 술래가 아니고, 현재 Reday 페이즈라면 UI를 키도록
+            bool isSeeker = Runner.LocalPlayer == Seeker;
+
+            // TODO :: 페이즈가 막 바뀌었을 때 한 번만 실행되도록 나중에 로직 변경 예정
         }
 
         public override void FixedUpdateNetwork()

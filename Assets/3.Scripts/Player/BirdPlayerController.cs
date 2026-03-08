@@ -9,14 +9,20 @@ namespace Bird.Network.Player
 {
     public class BirdPlayerController : NetworkBehaviour
     {
+        public static BirdPlayerController Local { get; private set; }
+        
+        [Header("Prop Settings")]
         [SerializeField] private PropDatabase propDatabase;
         [SerializeField] private Transform meshContainer; // 모델링이 생성될 부모 오브젝트
+        [SerializeField] private GameObject defaultVisual; // 기본 모델
+        
         [SerializeField] private float moveSpeed = 5f;
         [SerializeField] private Vector3 cameraOffset = new Vector3(0, 3, -6); // 카메라 위치 오프셋
         
         private CharacterController controller;
         private Camera mainCamera;
 
+        // 네트워크 변수 : 이 값이 바뀌면 모든 클라이언트의 Render()가 감지합니다.
         [Networked] public int CurrentPropID { get; set; } = -1; // -1은 기본 상태
         
         public override void Spawned()
@@ -27,11 +33,15 @@ namespace Bird.Network.Player
             // 내가 조종하는 캐릭터라면 카메라를 내 뒤로 배치 HasInputAuthority(이 캐릭터가 내 조이스틱 입력을 받는 주인공인가?를 묻는 질문입니다.)
             if (HasInputAuthority)
             {
+                Local = this;
                 Debug.Log("[Bird] 내 캐릭터 카메라 설정 완료");
             }
+            
+            // 초기 외형 설정
+            UpdateAppearance();
         }
 
-        // 변수 값이 바뀌었을 때 실행될 콜백 (Fusion 2 스타일입니다)
+        // Fusion 2에서 [Networked] 변수가 변경될 때 시각적 업데이트를 처리하는 함수입니다.
         public override void Render()
         {
             // 이전 프레임과 값이 다를 때만 외형 업데이트
@@ -76,7 +86,10 @@ namespace Bird.Network.Player
                 }
 
                 // 실제 이동 수행
-                controller.Move(moveVector);
+                if (controller != null && controller.enabled)
+                {
+                    controller.Move(moveVector);
+                }
         
                 if (moveDirection.magnitude > 0.1f)
                 {
@@ -89,23 +102,46 @@ namespace Bird.Network.Player
 
         private void UpdateAppearance()
         {
+            if (propDatabase == null || meshContainer == null) return;
+            
             // 기존 매쉬 자식들을 모두 제거
             foreach (Transform child in meshContainer) Destroy(child.gameObject);
 
             // ID가 -1이면 기본 외형 표시
-            if (CurrentPropID == -1) return;
+            if (CurrentPropID == -1)
+            {
+                if (defaultVisual != null) defaultVisual.SetActive(true);
+                ResetCollider();
+                return;
+            }
             
             var data = propDatabase.GetPropByID(CurrentPropID);
             if (data != null)
             {
+                if (defaultVisual != null) defaultVisual.SetActive(false);
                 // 모델 생성
                 Instantiate(data.PropPrefab, meshContainer);
                 
-                // 크기 조정
-                controller.center = data.Center;
-                controller.height = data.Height;
-                controller.radius = data.Radius;
+                var cc = GetComponent<CharacterController>();
+                if (cc != null)
+                {
+                    cc.enabled = false;
+
+                    cc.height = data.Height;
+                    cc.radius = data.Radius;
+                    cc.center = data.Center;
+                    cc.stepOffset = Mathf.Min(data.Height * 0.3F, 0.3F);
+
+                    cc.enabled = true;
+                }
             }
+        }
+
+        private void ResetCollider()
+        {
+            controller.center = new Vector3(0, 0, 0);
+            controller.height = 2f;
+            controller.radius = 0.5f;
         }
 
         private void UpdatePlayerBehaviourByPhase()
@@ -146,6 +182,26 @@ namespace Bird.Network.Player
             else
             {
                 Camera.main.cullingMask |= (1 << propLayer);
+            }
+        }
+
+        /// <summary>
+        /// 클라이언트가 서버에게 "나 변신시켜줘"라고 요청하는 함수입니다.
+        /// Networked => 모든 사람이 보고 있는 전광판입니다. (서버만 수정할 수 있습니다)
+        /// RPC => 손님이 주방에 전달하는 주문서 입니다.
+        /// 손님(클라이언트)이 전광판에 올라가서 자기 맘대로 메뉴를 고칠 수는 없습니다. 대신 주문서(RPC)를 주방(서버)에 보내면, 요리사가 확인하고 전광판(CurrentPropID)을 업데이트해주는 방식입니다.
+        /// </summary>
+        /// <param name="propID"></param>
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        public void RPC_RequestChangeProp(int propID)
+        {
+            // 서버에서만 이 로직이 실행됩니다.
+            // 여기서 검증(준비 시간인지 등)을 거친 후 값을 바꿔줍니다.
+            var gameManager = BirdGameManager.Instance;
+            if (gameManager.CurrentPhase == GamePhase.Ready || gameManager.CurrentPhase == GamePhase.Reroll || gameManager.CurrentPhase == GamePhase.Lobby) // Lobby는 솔로로 테스트하기 위해 잠시 넣어뒀음. 나중에 지워야함
+            {
+                CurrentPropID = propID;
+                Debug.Log($"[Bird] 서버가 {Object.InputAuthority}의 사물을 {propID}번으로 변경을 승인하였습니다.");
             }
         }
     }

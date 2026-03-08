@@ -96,6 +96,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   propDatabase: {fileID: 11400000, guid: b86141fc11374ae43bae41693d589305, type: 2}
   meshContainer: {fileID: 4851662048458934557}
+  defaultVisual: {fileID: 8935436108183479893}
   moveSpeed: 5
   cameraOffset: {x: 0, y: 3, z: -6}
   _CurrentPropID: -1
