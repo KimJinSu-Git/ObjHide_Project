@@ -15,6 +15,7 @@ MonoBehaviour:
   PropID: 3
   PropName: Sphere
   PropPrefab: {fileID: 8664488908691446235, guid: ff155960f07e4a94bb1a76f1b41e6faa, type: 3}
+  MaxHP: 50
   Center: {x: 0, y: 0, z: 0}
-  Radius: 0
-  Height: 0
+  Radius: 0.5
+  Height: 1

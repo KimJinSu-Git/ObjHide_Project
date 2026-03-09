@@ -15,6 +15,7 @@ MonoBehaviour:
   PropID: 1
   PropName: Cube
   PropPrefab: {fileID: 570363873411136201, guid: 0b7d212159f2f47468069b8f7b535c8d, type: 3}
+  MaxHP: 100
   Center: {x: 0, y: 0, z: 0}
-  Radius: 0
-  Height: 0
+  Radius: 0.5
+  Height: 1

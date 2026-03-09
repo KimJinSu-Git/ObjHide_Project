@@ -3,7 +3,9 @@ using Bird.Network.Data;
 using Bird.Network.Managers;
 using Bird.Network.UI;
 using Fusion;
+using Unity.VisualScripting;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Bird.Network.Player
 {
@@ -18,12 +20,18 @@ namespace Bird.Network.Player
         
         [SerializeField] private float moveSpeed = 5f;
         [SerializeField] private Vector3 cameraOffset = new Vector3(0, 3, -6); // 카메라 위치 오프셋
+
+        [SerializeField] private GameObject bulletPrefab; // 탄환 프리팹
         
         private CharacterController controller;
         private Camera mainCamera;
 
+        private int activeBulletsFormLastShot = 0;
+        private bool didAnyBulletHit = false;
+
         // 네트워크 변수 : 이 값이 바뀌면 모든 클라이언트의 Render()가 감지합니다.
         [Networked] public int CurrentPropID { get; set; } = -1; // -1은 기본 상태
+        [Networked] public int CurrentHP { get; set; }
         
         public override void Spawned()
         {
@@ -35,6 +43,11 @@ namespace Bird.Network.Player
             {
                 Local = this;
                 Debug.Log("[Bird] 내 캐릭터 카메라 설정 완료");
+
+                if (FireButtonHandler.Instance != null)
+                {
+                    FireButtonHandler.Instance.SetUpButton(RequestFire);
+                }
             }
             
             // 초기 외형 설정
@@ -118,6 +131,9 @@ namespace Bird.Network.Player
             var data = propDatabase.GetPropByID(CurrentPropID);
             if (data != null)
             {
+                // 체력 설정 (서버 권한)
+                if (HasStateAuthority) CurrentHP = data.MaxHP;
+                
                 if (defaultVisual != null) defaultVisual.SetActive(false);
                 // 모델 생성
                 Instantiate(data.PropPrefab, meshContainer);
@@ -126,12 +142,9 @@ namespace Bird.Network.Player
                 if (cc != null)
                 {
                     cc.enabled = false;
-
                     cc.height = data.Height;
                     cc.radius = data.Radius;
                     cc.center = data.Center;
-                    cc.stepOffset = Mathf.Min(data.Height * 0.3F, 0.3F);
-
                     cc.enabled = true;
                 }
             }
@@ -150,6 +163,12 @@ namespace Bird.Network.Player
             if (!BirdGameManager.Instance.Object || !BirdGameManager.Instance.Object.IsValid) return;
 
             bool isSeeker = Runner.LocalPlayer == BirdGameManager.Instance.Seeker;
+
+            if (HasInputAuthority && FireButtonHandler.Instance != null)
+            {
+                bool shouldShowButton = isSeeker && BirdGameManager.Instance.CurrentPhase != GamePhase.Lobby;
+                FireButtonHandler.Instance.SetVisible(shouldShowButton);
+            }
 
             if (BirdGameManager.Instance.CurrentPhase == GamePhase.Ready)
             {
@@ -185,6 +204,91 @@ namespace Bird.Network.Player
             }
         }
 
+        public void TakeDamage(int damage)
+        {
+            if (!HasStateAuthority) return;
+            if (CurrentHP <= 0) return;
+
+            CurrentHP -= damage;
+            Debug.Log($"[Bird] {Object.InputAuthority} 피격! 남은 체력은 : {CurrentHP}입니다.");
+            
+            if (CurrentHP <= 0)
+            {
+                OnDeath();
+            }
+        }
+
+        private void OnDeath()
+        {
+            // 사망처리 (TODO :: 관전자 모드 전환 추가 예정)
+            Debug.Log($"{Object.InputAuthority} 플레이어 사망!");
+        }
+
+        /// <summary>
+        /// 총기 발사 버튼 클릭시 호출 될 함수
+        /// </summary>
+        public void RequestFire()
+        {
+            if (!HasInputAuthority) return;
+            
+            RPC_SpawnProjectile(transform.position, transform.forward);
+        }
+
+        // 총알이 명중했을 때 호출
+        public void NotifyBulletHit()
+        {
+            didAnyBulletHit = true;
+            activeBulletsFormLastShot--;
+            CheckShotResult();
+        }
+
+        // 총알이 빗나가서 소멸했을 때 호출
+        public void NotifyBulletMiss()
+        {
+            activeBulletsFormLastShot--;
+            CheckShotResult();
+        }
+
+        private void CheckShotResult()
+        {
+            // 발사한 5발이 모두 처리가 끝났을 때
+            if (activeBulletsFormLastShot <= 0)
+            {
+                // 단 한발도 명중하지 못했을 때
+                if (!didAnyBulletHit)
+                {
+                    Debug.Log("[Bird] 한 발도 명중하지 못했으므로 페널티가 부여됩니다");
+                    TakeDamage(10);
+                }
+                else
+                {
+                    Debug.Log("[Bird] 적중한 탄환이 있어 페널티를 면제합니다.");
+                }
+            }
+        }
+        
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        public void RPC_SpawnProjectile(Vector3 origin, Vector3 direction)
+        {
+            activeBulletsFormLastShot = 5;
+            didAnyBulletHit = false;
+            
+            for (int i = 0; i < 5; i++)
+            {
+                Vector3 spread = new Vector3(Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f));
+                Quaternion rotation = Quaternion.LookRotation(direction + spread);
+
+                var bulletObj = Runner.Spawn(bulletPrefab, origin, rotation, Object.InputAuthority);
+
+                var bulletScript = bulletObj.GetComponent<BirdBullet>();
+                if (bulletScript != null)
+                {
+                    bulletScript.Owner = Object.InputAuthority;
+                    bulletScript.Setup(this);
+                }
+            }
+        }
+        
         /// <summary>
         /// 클라이언트가 서버에게 "나 변신시켜줘"라고 요청하는 함수입니다.
         /// Networked => 모든 사람이 보고 있는 전광판입니다. (서버만 수정할 수 있습니다)

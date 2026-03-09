@@ -15,6 +15,7 @@ MonoBehaviour:
   PropID: 2
   PropName: Cylinder
   PropPrefab: {fileID: 3831569035811581574, guid: def62bdded27b9e4cbe0effd7f4a9e22, type: 3}
+  MaxHP: 150
   Center: {x: 0, y: 0, z: 0}
-  Radius: 0
-  Height: 0
+  Radius: 0.5
+  Height: 1
