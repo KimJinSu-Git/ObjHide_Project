@@ -61,7 +61,7 @@ namespace Bird.Network.Player
                 {
                     launcher.NotifyBulletHit();
                 }
-                target.TakeDamage(10);
+                target.TakeDamage(10, Owner);
                 Runner.Despawn(Object); // 명중 시 소멸
             }
             else if (foreign.gameObject.layer == LayerMask.NameToLayer("Environment"))

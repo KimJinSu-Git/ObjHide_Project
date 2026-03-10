@@ -26,12 +26,13 @@ namespace Bird.Network.Player
         private CharacterController controller;
         private Camera mainCamera;
 
-        private int activeBulletsFormLastShot = 0;
-        private bool didAnyBulletHit = false;
-
         // 네트워크 변수 : 이 값이 바뀌면 모든 클라이언트의 Render()가 감지합니다.
         [Networked] public int CurrentPropID { get; set; } = -1; // -1은 기본 상태
+        [Networked] public int LastAppliedPropID { get; set; } = -2;
         [Networked] public int CurrentHP { get; set; }
+        [Networked] public TickTimer fireCooldown { get; set; }
+        [Networked] private int activeBulletsFormLastShot { get; set; } = 0;
+        [Networked] private bool didAnyBulletHit { get; set; } = false;
         
         public override void Spawned()
         {
@@ -117,37 +118,51 @@ namespace Bird.Network.Player
         {
             if (propDatabase == null || meshContainer == null) return;
             
+            // if (LastAppliedPropID == CurrentPropID) return;
+            
             // 기존 매쉬 자식들을 모두 제거
             foreach (Transform child in meshContainer) Destroy(child.gameObject);
 
             // ID가 -1이면 기본 외형 표시
             if (CurrentPropID == -1)
             {
+                if (HasStateAuthority && CurrentHP == 0) CurrentHP = 100;
+                
                 if (defaultVisual != null) defaultVisual.SetActive(true);
                 ResetCollider();
-                return;
             }
-            
-            var data = propDatabase.GetPropByID(CurrentPropID);
-            if (data != null)
+            else
             {
-                // 체력 설정 (서버 권한)
-                if (HasStateAuthority) CurrentHP = data.MaxHP;
-                
-                if (defaultVisual != null) defaultVisual.SetActive(false);
-                // 모델 생성
-                Instantiate(data.PropPrefab, meshContainer);
-                
-                var cc = GetComponent<CharacterController>();
-                if (cc != null)
+                var data = propDatabase.GetPropByID(CurrentPropID);
+                if (data != null)
                 {
-                    cc.enabled = false;
-                    cc.height = data.Height;
-                    cc.radius = data.Radius;
-                    cc.center = data.Center;
-                    cc.enabled = true;
+                    // 체력 설정 (서버 권한)
+                    if (HasStateAuthority) CurrentHP = data.MaxHP;
+                
+                    if (defaultVisual != null) defaultVisual.SetActive(false);
+                    // 모델 생성
+                    var prop = Instantiate(data.PropPrefab, meshContainer);
+                    int layer = LayerMask.NameToLayer("PropPlayer");
+                    SetLayerRecursive(prop, layer);
+                
+                    var cc = GetComponent<CharacterController>();
+                    if (cc != null)
+                    {
+                        cc.enabled = false;
+                        cc.height = data.Height;
+                        cc.radius = data.Radius;
+                        cc.center = data.Center;
+                        cc.enabled = true;
+                    }
                 }
             }
+            // LastAppliedPropID = CurrentPropID;
+        }
+
+        private void SetLayerRecursive(GameObject obj, int layer)
+        {
+            obj.layer = layer;
+            foreach (Transform child in obj.transform) SetLayerRecursive(child.gameObject, layer);
         }
 
         private void ResetCollider()
@@ -196,7 +211,7 @@ namespace Bird.Network.Player
             int propLayer = LayerMask.NameToLayer("PropPlayer");
             if (isReadyPhase)
             {
-                Camera.main.cullingMask &= ~(1 << propLayer); // TODO ::: 나중에 플레이어들에게 propLayer를 추가할 예정입니다.
+                Camera.main.cullingMask &= ~(1 << propLayer);
             }
             else
             {
@@ -204,7 +219,7 @@ namespace Bird.Network.Player
             }
         }
 
-        public void TakeDamage(int damage)
+        public void TakeDamage(int damage, PlayerRef attacker)
         {
             if (!HasStateAuthority) return;
             if (CurrentHP <= 0) return;
@@ -214,14 +229,36 @@ namespace Bird.Network.Player
             
             if (CurrentHP <= 0)
             {
+                // 도망자가 죽었을 때 술래의 체력을 회복 시킴
+                if (attacker != PlayerRef.None && attacker != Object.InputAuthority)
+                {
+                    var seekerObj = Runner.GetPlayerObject(attacker);
+                    if (seekerObj != null)
+                    {
+                        var seekerController = seekerObj.GetComponent<BirdPlayerController>();
+                        seekerController?.Heal(50);
+                    }
+                }
                 OnDeath();
             }
+        }
+
+        public void Heal(int amount)
+        {
+            if (!HasStateAuthority) return;
+            CurrentHP = (int)MathF.Min(CurrentHP + amount, 100);
+            Debug.Log($"[Bird] 도망자 사망 => 술래 회복. 현재 체력 : {CurrentHP}");
         }
 
         private void OnDeath()
         {
             // 사망처리 (TODO :: 관전자 모드 전환 추가 예정)
             Debug.Log($"{Object.InputAuthority} 플레이어 사망!");
+            if (BirdGameManager.Instance.Seeker == Object.InputAuthority)
+            {
+                Debug.Log("술래 사망");
+                // BirdGameManager.Instance.EndRound(false); // 술래 패배
+            }
         }
 
         /// <summary>
@@ -230,8 +267,16 @@ namespace Bird.Network.Player
         public void RequestFire()
         {
             if (!HasInputAuthority) return;
+
+            if (!fireCooldown.ExpiredOrNotRunning(Runner) && fireCooldown.IsRunning) return;
+
+            // 쿨타임 1초 설정
+            fireCooldown = TickTimer.CreateFromSeconds(Runner, 1f);
             
-            RPC_SpawnProjectile(transform.position, transform.forward);
+            // Vector3 fireorigin = mainCamera.transform.position + (mainCamera.transform.forward * 1.5f);
+            // Vector3 fireDirection = mainCamera.transform.forward;
+            
+            RPC_SpawnProjectile(transform.position + transform.forward * 1f, transform.forward);
         }
 
         // 총알이 명중했을 때 호출
@@ -258,7 +303,7 @@ namespace Bird.Network.Player
                 if (!didAnyBulletHit)
                 {
                     Debug.Log("[Bird] 한 발도 명중하지 못했으므로 페널티가 부여됩니다");
-                    TakeDamage(10);
+                    TakeDamage(10, Object.InputAuthority);
                 }
                 else
                 {
@@ -279,7 +324,7 @@ namespace Bird.Network.Player
                 Quaternion rotation = Quaternion.LookRotation(direction + spread);
 
                 var bulletObj = Runner.Spawn(bulletPrefab, origin, rotation, Object.InputAuthority);
-
+                
                 var bulletScript = bulletObj.GetComponent<BirdBullet>();
                 if (bulletScript != null)
                 {
@@ -294,6 +339,8 @@ namespace Bird.Network.Player
         /// Networked => 모든 사람이 보고 있는 전광판입니다. (서버만 수정할 수 있습니다)
         /// RPC => 손님이 주방에 전달하는 주문서 입니다.
         /// 손님(클라이언트)이 전광판에 올라가서 자기 맘대로 메뉴를 고칠 수는 없습니다. 대신 주문서(RPC)를 주방(서버)에 보내면, 요리사가 확인하고 전광판(CurrentPropID)을 업데이트해주는 방식입니다.
+        /// InputAuthority => 이 명령을 보낼 수 있는 사람(이 캐릭터를 실제로 조종하고 있는 클라이언트(내 컴퓨터)가 발신자임을 의미합니다)
+        /// StateAuthority => 이 명령을 받아서 실행할 사람. 게임의 모든 중요한 판정은 서버가 담당해야 하므로 서버가 수신자가 됩니다.
         /// </summary>
         /// <param name="propID"></param>
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]

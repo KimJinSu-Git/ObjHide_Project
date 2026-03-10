@@ -21,7 +21,7 @@ namespace Bird.Network.UI
             if (BirdGameManager.Instance.StateTimer.IsRunning)
             {
                 float? remainingTime = BirdGameManager.Instance.StateTimer.RemainingTime(BirdGameManager.Instance.Runner);
-                timerText.text = remainingTime.HasValue ? $"Remain Time : {Mathf.CeilToInt(remainingTime.Value)}초" : "";
+                timerText.text = remainingTime.HasValue ? $"Remain Time : {Mathf.CeilToInt(remainingTime.Value)} Seconds" : "";
             }
         }
     }

@@ -18,11 +18,12 @@ namespace Bird.Network.Managers
     public class BirdGameManager : NetworkBehaviour
     {
         public static BirdGameManager Instance { get; private set; }
+
+        private GamePhase lastPhase;
         
         // 서버에서만 수정 가능한 네트워크 변수
         [Networked] public TickTimer StateTimer { get; set; }
         [Networked] public GamePhase CurrentPhase { get; set; }
-        
         [Networked] public PlayerRef Seeker { get; set; }
 
         public override void Spawned()
@@ -43,6 +44,7 @@ namespace Bird.Network.Managers
             bool isSeeker = Runner.LocalPlayer == Seeker;
 
             // TODO :: 페이즈가 막 바뀌었을 때 한 번만 실행되도록 나중에 로직 변경 예정
+            CheckPhaseChange();
         }
 
         public override void FixedUpdateNetwork()
@@ -63,6 +65,36 @@ namespace Bird.Network.Managers
             if (StateTimer.Expired(Runner))
             {
                 AdvancePhase();
+            }
+        }
+
+        private void CheckPhaseChange()
+        {
+            if (lastPhase == CurrentPhase) return;
+            
+            // 페이즈가 막 바뀌었을 때 한 번 실행할 로직
+            OnPhaseChange(CurrentPhase);
+            lastPhase = CurrentPhase;
+        }
+
+        private void OnPhaseChange(GamePhase newPhase)
+        {
+            bool isSeeker = Runner.LocalPlayer == Seeker;
+
+            if (!isSeeker && (newPhase == GamePhase.Ready || newPhase == GamePhase.Reroll))
+            {
+                if (PropSelectionUIHandler.Instance != null)
+                {
+                    PropSelectionUIHandler.Instance.hasSelected = false;
+                    PropSelectionUIHandler.Instance.OpenSelectionUI();
+                }
+            }
+            else
+            {
+                if (PropSelectionUIHandler.Instance != null)
+                {
+                    PropSelectionUIHandler.Instance.CloseUI();
+                }
             }
         }
 
