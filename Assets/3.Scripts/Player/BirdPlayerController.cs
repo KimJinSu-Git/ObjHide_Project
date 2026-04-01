@@ -67,14 +67,13 @@ namespace Bird.Network.Player
             if (HasInputAuthority && mainCamera != null)
             {
                 // 카메라 회전 적용 (수평 회전만)
-                Quaternion rotation = Quaternion.Euler(0, CameraRotationHandler.CurrentYaw, 0);
+                Quaternion rotation = Quaternion.Euler(CameraRotationHandler.CurrentPitch, CameraRotationHandler.CurrentYaw, 0);
                 
                 // 캐릭터 뒤편에 카메라 배치
                 Vector3 rotatedOffset = rotation * cameraOffset;
                 mainCamera.transform.position = transform.position + rotatedOffset;
                 
-                // 캐릭터를 쳐다보도록
-                mainCamera.transform.LookAt(transform.position + Vector3.up);
+                mainCamera.transform.rotation = rotation;
             }
         }
 
@@ -273,10 +272,9 @@ namespace Bird.Network.Player
             // 쿨타임 1초 설정
             fireCooldown = TickTimer.CreateFromSeconds(Runner, 1f);
             
-            // Vector3 fireorigin = mainCamera.transform.position + (mainCamera.transform.forward * 1.5f);
-            // Vector3 fireDirection = mainCamera.transform.forward;
+            Vector3 fireDirection = mainCamera.transform.forward;
             
-            RPC_SpawnProjectile(transform.position + transform.forward * 1f, transform.forward);
+            RPC_SpawnProjectile(transform.position + transform.forward * 1f, fireDirection);
         }
 
         // 총알이 명중했을 때 호출
@@ -313,7 +311,7 @@ namespace Bird.Network.Player
         }
         
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-        public void RPC_SpawnProjectile(Vector3 origin, Vector3 direction)
+        private void RPC_SpawnProjectile(Vector3 origin, Vector3 direction)
         {
             activeBulletsFormLastShot = 5;
             didAnyBulletHit = false;

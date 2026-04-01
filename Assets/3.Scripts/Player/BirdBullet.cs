@@ -52,7 +52,7 @@ namespace Bird.Network.Player
         {
             if (!Object.HasStateAuthority) return;
             
-            var target = foreign.GetComponent<BirdPlayerController>();
+            var target = foreign.GetComponentInParent<BirdPlayerController>();
             
             // 플레이어를 맞춘 경우
             if (target != null && target.Object.InputAuthority != Owner)
@@ -68,7 +68,7 @@ namespace Bird.Network.Player
             {
                 if (launcher != null)
                 {
-                    launcher.NotifyBulletHit();
+                    launcher.NotifyBulletMiss();
                 }
                 Runner.Despawn(Object);
             }
