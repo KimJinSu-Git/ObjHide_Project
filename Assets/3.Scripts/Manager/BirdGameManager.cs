@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Bird.Network.Player;
 using Bird.Network.UI;
 using Fusion;
 using UnityEngine;
@@ -61,11 +62,66 @@ namespace Bird.Network.Managers
                 return;
             }
 
+            // 게임 진행 중일 때만 승패 판정 체크 (Ready 제외)
+            if (CurrentPhase != GamePhase.Ready && CurrentPhase != GamePhase.Result)
+            {
+                CheckGameOver();
+            }
+
             // 타이머가 만료되었을 때 다음 단계로 진행
             if (StateTimer.Expired(Runner))
             {
-                AdvancePhase();
+                if (CurrentPhase == GamePhase.Fever)
+                {
+                    EndGame(false); // 시간 종료 시 도망자 승리
+                }
+                else
+                {
+                    AdvancePhase();
+                }
             }
+        }
+
+        private void CheckGameOver()
+        {
+            int aliveHiders = 0;
+            bool isSeekerAlive = false;
+
+            foreach (var player in Runner.ActivePlayers)
+            {
+                var playerObj = Runner.GetPlayerObject(player);
+                if (playerObj == null) continue;
+
+                var controller = playerObj.GetComponent<BirdPlayerController>();
+                if (controller == null || controller.CurrentHP <= 0) continue;
+
+                if (player == Seeker)
+                {
+                    isSeekerAlive = true;
+                }
+                else
+                {
+                    aliveHiders++;
+                }
+            }
+
+            // 술래가 죽었거나 도망자가 전멸했을 때 게임 종료
+            if (!isSeekerAlive)
+            {
+                EndGame(false); // 도망자 승리
+            }
+            else if (aliveHiders <= 0)
+            {
+                EndGame(true); // 술래 승리
+            }
+        }
+
+        private void EndGame(bool seekerWin)
+        {
+            if (CurrentPhase == GamePhase.Result) return;
+            
+            Debug.Log($"[Bird] 게임 종료! 승리팀: {(seekerWin ? "술래" : "도망자")}");
+            SetPhase(GamePhase.Result, 10f); // 10초 동안 결과 창 표시
         }
 
         private void CheckPhaseChange()

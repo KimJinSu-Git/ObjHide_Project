@@ -67,6 +67,9 @@ namespace Bird.Network.Handlers
             Vector3 spawnPos = new Vector3(Random.Range(-3, 3), 1, Random.Range(-3, 3));
             var playerObject = runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
             
+            // 핵심 : 퓨전 엔진에 이 플레이어의 대표 몸체가 누구인지 알려줍니다.
+            runner.SetPlayerObject(player, playerObject);
+            
             spawnedCharacters.Add(player, playerObject);
         }
 
@@ -99,6 +102,9 @@ namespace Bird.Network.Handlers
             {
                 data.Movement = keyboardInput.normalized;
             }
+            
+            // 카메라의 수평 회전(Yaw) 값을 서버로 전달
+            data.LookYaw = CameraRotationHandler.CurrentYaw;
             
             // Fusion 엔진에 입력값 전달
             input.Set(data);

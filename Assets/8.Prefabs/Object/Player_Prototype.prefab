@@ -98,7 +98,7 @@ MonoBehaviour:
   meshContainer: {fileID: 4851662048458934557}
   defaultVisual: {fileID: 8935436108183479893}
   moveSpeed: 5
-  cameraOffset: {x: 0, y: 3, z: -6}
+  cameraOffset: {x: 0, y: 2.2, z: -6}
   bulletPrefab: {fileID: 9037097851170638629, guid: d93c790e138cb964089f330d711fe5b8, type: 3}
   _CurrentPropID: -1
   _CurrentHP: 0

@@ -27,12 +27,15 @@ namespace Bird.Network.Player
         private Camera mainCamera;
 
         // 네트워크 변수 : 이 값이 바뀌면 모든 클라이언트의 Render()가 감지합니다.
-        [Networked] public int CurrentPropID { get; set; } = -1; // -1은 기본 상태
-        [Networked] public int LastAppliedPropID { get; set; } = -2;
+        [Networked, OnChangedRender(nameof(OnPropIDChanged))] public int CurrentPropID { get; set; } = -1; // -1은 기본 상태
+        private int lastAppliedPropID = -2; // 로컬에서만 체크하여 성능 최적화
+        
         [Networked] public int CurrentHP { get; set; }
         [Networked] public TickTimer fireCooldown { get; set; }
         [Networked] private int activeBulletsFormLastShot { get; set; } = 0;
         [Networked] private bool didAnyBulletHit { get; set; } = false;
+
+        private void OnPropIDChanged() => UpdateAppearance();
         
         public override void Spawned()
         {
@@ -58,8 +61,7 @@ namespace Bird.Network.Player
         // Fusion 2에서 [Networked] 변수가 변경될 때 시각적 업데이트를 처리하는 함수입니다.
         public override void Render()
         {
-            // 이전 프레임과 값이 다를 때만 외형 업데이트
-            UpdateAppearance();
+            // 이제 OnPropIDChanged 콜백이 외형 업데이트를 담당하므로 여기서는 호출하지 않습니다.
         }
 
         private void LateUpdate()
@@ -86,9 +88,9 @@ namespace Bird.Network.Player
             // 서버로부터 내 입력 데이터를 가져옴
             if (GetInput(out BirdInputData data))
             {
-                // 이동 방향 계산 (카메라 회전 Yaw 값을 적용)
+                // 이동 방향 계산 (입력 데이터에 담긴 LookYaw 값을 적용)
                 // 캐릭터가 카메라가 바라보는 방향을 기준으로 움직이게 합니다.
-                Quaternion lookRotation = Quaternion.Euler(0, CameraRotationHandler.CurrentYaw, 0);
+                Quaternion lookRotation = Quaternion.Euler(0, data.LookYaw, 0);
                 Vector3 moveDirection = lookRotation * data.Movement;
         
                 Vector3 moveVector = moveDirection * moveSpeed * Runner.DeltaTime;
@@ -117,7 +119,7 @@ namespace Bird.Network.Player
         {
             if (propDatabase == null || meshContainer == null) return;
             
-            // if (LastAppliedPropID == CurrentPropID) return;
+            if (lastAppliedPropID == CurrentPropID) return;
             
             // 기존 매쉬 자식들을 모두 제거
             foreach (Transform child in meshContainer) Destroy(child.gameObject);
@@ -155,7 +157,7 @@ namespace Bird.Network.Player
                     }
                 }
             }
-            // LastAppliedPropID = CurrentPropID;
+            lastAppliedPropID = CurrentPropID;
         }
 
         private void SetLayerRecursive(GameObject obj, int layer)
@@ -177,14 +179,17 @@ namespace Bird.Network.Player
             if (!BirdGameManager.Instance.Object || !BirdGameManager.Instance.Object.IsValid) return;
 
             bool isSeeker = Runner.LocalPlayer == BirdGameManager.Instance.Seeker;
+            var currentPhase = BirdGameManager.Instance.CurrentPhase;
 
+            // 술래이면서, 게임이 시작(Hide/Reroll/Final/Fever)된 상태에서만 버튼 노출
             if (HasInputAuthority && FireButtonHandler.Instance != null)
             {
-                bool shouldShowButton = isSeeker && BirdGameManager.Instance.CurrentPhase != GamePhase.Lobby;
+                bool isGameActive = currentPhase != GamePhase.Lobby && currentPhase != GamePhase.Ready && currentPhase != GamePhase.Result;
+                bool shouldShowButton = isSeeker && isGameActive;
                 FireButtonHandler.Instance.SetVisible(shouldShowButton);
             }
 
-            if (BirdGameManager.Instance.CurrentPhase == GamePhase.Ready)
+            if (currentPhase == GamePhase.Ready)
             {
                 if (isSeeker)
                 {
@@ -196,7 +201,7 @@ namespace Bird.Network.Player
                     ApplySeekerVision(false);
                 }
             }
-            else if (BirdGameManager.Instance.CurrentPhase == GamePhase.Hide)
+            else if (currentPhase == GamePhase.Hide)
             {
                 // 술래 시야 복구
                 ApplySeekerVision(false);
@@ -251,13 +256,23 @@ namespace Bird.Network.Player
 
         private void OnDeath()
         {
-            // 사망처리 (TODO :: 관전자 모드 전환 추가 예정)
+            // 사망처리
             Debug.Log($"{Object.InputAuthority} 플레이어 사망!");
-            if (BirdGameManager.Instance.Seeker == Object.InputAuthority)
+            
+            // 모든 클라이언트에서 외형을 숨기기 위해 PropID를 특수 값(예: -2)으로 설정하거나 
+            // 메시 컨테이너를 비활성화 할 수 있습니다.
+            // 여기서는 단순하게 PropID를 -1(기본)로 돌리고 모델을 비활성화하는 방식을 제안합니다.
+            if (HasStateAuthority)
             {
-                Debug.Log("술래 사망");
-                // BirdGameManager.Instance.EndRound(false); // 술래 패배
+                CurrentPropID = -1;
             }
+
+            // 시각적 비활성화 (모든 클라이언트)
+            if (meshContainer != null) meshContainer.gameObject.SetActive(false);
+            if (defaultVisual != null) defaultVisual.SetActive(false);
+            
+            // 콜라이더 비활성화로 다른 플레이어와 충돌 방지
+            if (controller != null) controller.enabled = false;
         }
 
         /// <summary>
@@ -300,6 +315,12 @@ namespace Bird.Network.Player
                 // 단 한발도 명중하지 못했을 때
                 if (!didAnyBulletHit)
                 {
+                    if (BirdGameManager.Instance.CurrentPhase == GamePhase.Fever)
+                    {
+                        Debug.Log("[Bird] 피버 타임! 페널티 없이 사격합니다.");
+                        return; 
+                    }
+                    
                     Debug.Log("[Bird] 한 발도 명중하지 못했으므로 페널티가 부여됩니다");
                     TakeDamage(10, Object.InputAuthority);
                 }

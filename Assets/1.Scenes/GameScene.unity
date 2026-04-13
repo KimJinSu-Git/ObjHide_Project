@@ -556,7 +556,7 @@ GameObject:
   - component: {fileID: 162475252}
   - component: {fileID: 162475251}
   - component: {fileID: 162475250}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Plane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1004,6 +1004,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sensitivity: 0.1
+  minPitch: -45
+  maxPitch: 45
 --- !u!1 &485138135
 GameObject:
   m_ObjectHideFlags: 0
@@ -1831,6 +1833,7 @@ MonoBehaviour:
   - {fileID: 1050844468}
   propDatabase: {fileID: 11400000, guid: b86141fc11374ae43bae41693d589305, type: 2}
   timerText: {fileID: 1050757129}
+  hasSelected: 0
 --- !u!1 &1050757128
 GameObject:
   m_ObjectHideFlags: 0

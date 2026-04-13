@@ -50,13 +50,17 @@ namespace Bird.Network.Player
 
         private void OnTriggerEnter(Collider foreign)
         {
-            if (!Object.HasStateAuthority) return;
+            // 방어 코드: 이미 파괴되었거나 유효하지 않은 경우 무시
+            if (Object == null || !Object.IsValid || !Object.HasStateAuthority) return;
             
             var target = foreign.GetComponentInParent<BirdPlayerController>();
             
-            // 플레이어를 맞춘 경우
-            if (target != null && target.Object.InputAuthority != Owner)
+            // 1. 플레이어를 맞춘 경우
+            if (target != null)
             {
+                // 자신(발사자)은 맞출 수 없음
+                if (target.Object.InputAuthority == Owner) return;
+
                 if (launcher != null)
                 {
                     launcher.NotifyBulletHit();
@@ -64,8 +68,12 @@ namespace Bird.Network.Player
                 target.TakeDamage(10, Owner);
                 Runner.Despawn(Object); // 명중 시 소멸
             }
-            else if (foreign.gameObject.layer == LayerMask.NameToLayer("Environment"))
+            // 2. 플레이어가 아닌 환경이나 바닥에 맞은 경우
+            else
             {
+                // 생성 직후(예: 0.05초 이내) 바닥에 닿는 경우 무시 (발사 위치가 낮을 때 대비)
+                if (destroyTimer.RemainingTime(Runner) > lifeTime - 0.005f) return;
+
                 if (launcher != null)
                 {
                     launcher.NotifyBulletMiss();
