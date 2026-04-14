@@ -20,32 +20,69 @@ namespace Bird.Network.Managers
     {
         public static BirdGameManager Instance { get; private set; }
 
-        private GamePhase lastPhase;
-        
         // 서버에서만 수정 가능한 네트워크 변수
         [Networked] public TickTimer StateTimer { get; set; }
         [Networked] public GamePhase CurrentPhase { get; set; }
         [Networked] public PlayerRef Seeker { get; set; }
+        [Networked] public NetworkBool IsSeekerWin { get; set; }
+        [Networked] public int FinalSurvivorCount { get; set; }
+        
+        private ChangeDetector _changeDetector;
 
         public override void Spawned()
         {
             Instance = this;
+            
+            _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
             Debug.Log("[Bird] 게임 매니저 네트워크 스폰 완료");
+            UpdateUIForPhase(CurrentPhase);
         }
 
-        /// <summary>
-        /// 페이즈가 변경되었을 때 실행할 로직 (클라이언트 측 가시성 제어)
-        /// </summary>
         public override void Render()
         {
-            var uiHandler = FindObjectOfType<PropSelectionUIHandler>();
-            if (uiHandler == null) return;
+            // 3. 매 프레임 네트워크 변수의 변경을 감지 (이전 값과 달라졌을 때만 실행됨)
+            foreach (var change in _changeDetector.DetectChanges(this))
+            {
+                switch (change)
+                {
+                    case nameof(CurrentPhase):
+                        UpdateUIForPhase(CurrentPhase);
+                        break;
+                }
+            }
+        }
 
-            // 내가 술래가 아니고, 현재 Reday 페이즈라면 UI를 키도록
-            bool isSeeker = Runner.LocalPlayer == Seeker;
+        private void UpdateUIForPhase(GamePhase newPhase)
+        {
+            if (newPhase == GamePhase.Result)
+            {
+                if (ResultUIHandler.Instance != null)
+                {
+                    ResultUIHandler.Instance.ShowResult(IsSeekerWin, FinalSurvivorCount);
+                }
+            }
+            else
+            {
+                if (ResultUIHandler.Instance != null) ResultUIHandler.Instance.CloseUI();
+                
+                bool isSeeker = Runner.LocalPlayer == Seeker;
 
-            // TODO :: 페이즈가 막 바뀌었을 때 한 번만 실행되도록 나중에 로직 변경 예정
-            CheckPhaseChange();
+                if (!isSeeker && (newPhase == GamePhase.Ready || newPhase == GamePhase.Reroll))
+                {
+                    if (PropSelectionUIHandler.Instance != null)
+                    {
+                        PropSelectionUIHandler.Instance.hasSelected = false;
+                        PropSelectionUIHandler.Instance.OpenSelectionUI();
+                    }
+                }
+                else
+                {
+                    if (PropSelectionUIHandler.Instance != null)
+                    {
+                        PropSelectionUIHandler.Instance.CloseUI();
+                    }
+                }
+            }
         }
 
         public override void FixedUpdateNetwork()
@@ -73,7 +110,14 @@ namespace Bird.Network.Managers
             {
                 if (CurrentPhase == GamePhase.Fever)
                 {
-                    EndGame(false); // 시간 종료 시 도망자 승리
+                    // 시간 종료 시 현재 생존해 있는 도망자 수를 계산하여 전달
+                    int survivors = Runner.ActivePlayers.Count(p => {
+                        var obj = Runner.GetPlayerObject(p);
+                        if (obj == null) return false;
+                        var ctrl = obj.GetComponent<BirdPlayerController>();
+                        return p != Seeker && ctrl != null && ctrl.CurrentHP > 0;
+                    });
+                    EndGame(false, survivors); 
                 }
                 else
                 {
@@ -108,50 +152,23 @@ namespace Bird.Network.Managers
             // 술래가 죽었거나 도망자가 전멸했을 때 게임 종료
             if (!isSeekerAlive)
             {
-                EndGame(false); // 도망자 승리
+                EndGame(false, aliveHiders); // 도망자 승리
             }
             else if (aliveHiders <= 0)
             {
-                EndGame(true); // 술래 승리
+                EndGame(true, 0); // 술래 승리
             }
         }
 
-        private void EndGame(bool seekerWin)
+        private void EndGame(bool seekerWin, int survivorCount)
         {
             if (CurrentPhase == GamePhase.Result) return;
             
-            Debug.Log($"[Bird] 게임 종료! 승리팀: {(seekerWin ? "술래" : "도망자")}");
-            SetPhase(GamePhase.Result, 10f); // 10초 동안 결과 창 표시
-        }
-
-        private void CheckPhaseChange()
-        {
-            if (lastPhase == CurrentPhase) return;
+            IsSeekerWin = seekerWin;
+            FinalSurvivorCount = survivorCount;
             
-            // 페이즈가 막 바뀌었을 때 한 번 실행할 로직
-            OnPhaseChange(CurrentPhase);
-            lastPhase = CurrentPhase;
-        }
-
-        private void OnPhaseChange(GamePhase newPhase)
-        {
-            bool isSeeker = Runner.LocalPlayer == Seeker;
-
-            if (!isSeeker && (newPhase == GamePhase.Ready || newPhase == GamePhase.Reroll))
-            {
-                if (PropSelectionUIHandler.Instance != null)
-                {
-                    PropSelectionUIHandler.Instance.hasSelected = false;
-                    PropSelectionUIHandler.Instance.OpenSelectionUI();
-                }
-            }
-            else
-            {
-                if (PropSelectionUIHandler.Instance != null)
-                {
-                    PropSelectionUIHandler.Instance.CloseUI();
-                }
-            }
+            Debug.Log($"[Bird] 게임 종료! 승리팀: {(seekerWin ? "술래" : "도망자")}, 생존자: {survivorCount}");
+            SetPhase(GamePhase.Result, 20f); // 20초 동안 결과 창 표시
         }
 
         private void StartGame()
