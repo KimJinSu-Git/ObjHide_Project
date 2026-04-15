@@ -5,6 +5,7 @@ using Bird.Network.UI;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
 namespace Bird.Network.Handlers
@@ -82,6 +83,20 @@ namespace Bird.Network.Handlers
                 spawnedCharacters.Remove(player);
                 Debug.Log($"[Bird] 플레이어 퇴장 : {player}. 캐릭터를 제거했습니다.");
             }
+
+            if (runner.IsServer)
+            {
+                var gameManager = Managers.BirdGameManager.Instance;
+                if (gameManager != null)
+                {
+                    gameManager.HandlePlayerLeft(player);
+                }
+            }
+        }
+
+        public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
+        {
+            SceneManager.LoadScene(0);
         }
 
         public void OnInput(NetworkRunner runner, NetworkInput input)
@@ -122,8 +137,6 @@ namespace Bird.Network.Handlers
         public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
 
         public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
-
-        public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
 
         public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
 

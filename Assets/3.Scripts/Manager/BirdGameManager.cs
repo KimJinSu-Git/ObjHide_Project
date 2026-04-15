@@ -214,5 +214,38 @@ namespace Bird.Network.Managers
             CurrentPhase = nextPhase;
             StateTimer = TickTimer.CreateFromSeconds(Runner, duration);
         }
+        
+        /// <summary>
+        /// 플레이어 퇴장 시 호출되어 게임 지속 가능 여부를 판정합니다. (서버 전용)
+        /// </summary>
+        public void HandlePlayerLeft(PlayerRef leftPlayer)
+        {
+            if (!HasStateAuthority) return;
+
+            // 로비나 이미 결과창인 경우는 무시합니다.
+            if (CurrentPhase == GamePhase.Lobby || CurrentPhase == GamePhase.Result) return;
+
+            int activeCount = Runner.ActivePlayers.Count();
+
+            if (activeCount <= 1)
+            {
+                Debug.Log("[Bird] 인원 부족으로 게임을 강제 종료합니다.");
+                // 혼자 남은 사람이 술래라면 술래 승, 도망자라면 도망자 승으로 처리
+                bool isRemainingSeeker = (Seeker != leftPlayer); 
+                EndGame(isRemainingSeeker, activeCount);
+                return;
+            }
+
+            // 술래가 나간 경우 경우
+            if (Seeker == leftPlayer)
+            {
+                Debug.Log("[Bird] 술래가 도주했습니다! 도망자의 승리입니다.");
+                EndGame(false, activeCount); // 도망자 승리
+                return;
+            }
+
+            // 도망자가 나간 경우
+            CheckGameOver();
+        }
     }
 }
