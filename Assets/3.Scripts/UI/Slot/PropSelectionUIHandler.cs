@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Bird.Network.Data;
 using Bird.Network.Player;
 using TMPro;
@@ -31,14 +33,34 @@ namespace Bird.Network.UI
             panel.SetActive(true);
             hasSelected = false;
 
-            foreach (var slot in slots)
+            var randomProps = propDatabase.GetRandomUniqueProps(slots.Length);
+
+            for (int i = 0; i < slots.Length; i++)
             {
-                slot.SetupSlot(propDatabase.GetRandomProp(), (id) => ConfirmSelection(id));
-                
-                if(timerCoroutine != null) StopCoroutine(timerCoroutine);
-                timerCoroutine = StartCoroutine(Co_StartTimer(20f));
-                
-                slot.SetRerollActive(true); // 처음 한번은 리롤 가능
+                if (i < randomProps.Count)
+                {
+                    slots[i].SetupSlot(randomProps[i], ConfirmSelection, RequestReroll);
+                    slots[i].SetRerollActive(true); // 처음 리롤 버튼 활성화
+                }
+            }
+            
+            if(timerCoroutine != null) StopCoroutine(timerCoroutine);
+            timerCoroutine = StartCoroutine(Co_StartTimer(20f));
+        }
+
+        private void RequestReroll(BirdPropSlotUI targetSlot)
+        {
+            List<int> currentDisplayedIDs = slots
+                .Where(s => s.CurrentPropID != -1)
+                .Select(s => s.CurrentPropID)
+                .ToList();
+            
+            var newPropList = propDatabase.GetRandomUniqueProps(1, currentDisplayedIDs);
+
+            if (newPropList.Count > 0)
+            {
+                targetSlot.SetupSlot(newPropList[0], ConfirmSelection, RequestReroll);
+                targetSlot.SetRerollActive(false);
             }
         }
 

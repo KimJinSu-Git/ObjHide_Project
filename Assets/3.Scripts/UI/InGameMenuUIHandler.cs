@@ -36,7 +36,7 @@ namespace Bird.Network.UI
             menuPanel.SetActive(true);
         }
 
-        public void CloseMenu()
+        private void CloseMenu()
         {
             menuPanel.SetActive(false);
         }

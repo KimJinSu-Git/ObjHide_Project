@@ -1,3 +1,4 @@
+using System;
 using Bird.Network.Data;
 using TMPro;
 using UnityEngine;
@@ -16,13 +17,20 @@ namespace Bird.Network.UI
         public int CurrentPropID => currentData != null ? currentData.PropID : -1;
 
         // 슬롯 데이터 채우기
-        public void SetupSlot(BirdPropData data, System.Action<int> onSelect)
+        public void SetupSlot(BirdPropData data, Action<int> onSelect, Action<BirdPropSlotUI> onReroll)
         {
             currentData = data;
             propNameText.text = data.PropName;
             
             selectButton.onClick.RemoveAllListeners();
             selectButton.onClick.AddListener(() => onSelect?.Invoke(currentData.PropID));
+            
+            rerollButton.onClick.RemoveAllListeners();
+            rerollButton.onClick.AddListener(() =>
+            {
+                onReroll?.Invoke(this);
+                SetRerollActive(false);
+            });
         }
         
         public void SetRerollActive(bool active) => rerollButton.interactable = active;
