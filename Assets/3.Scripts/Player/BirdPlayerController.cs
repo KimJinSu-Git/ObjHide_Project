@@ -3,12 +3,13 @@ using Bird.Network.Data;
 using Bird.Network.Managers;
 using Bird.Network.UI;
 using Fusion;
-using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace Bird.Network.Player
 {
+    public enum CameraMode { FPS, TPS, FreeLook }
     public class BirdPlayerController : NetworkBehaviour
     {
         public static BirdPlayerController Local { get; private set; }
@@ -19,12 +20,19 @@ namespace Bird.Network.Player
         [SerializeField] private GameObject defaultVisual; // 기본 모델
         
         [SerializeField] private float moveSpeed = 5f;
+
+        [Header("Camera Settings")] 
+        [SerializeField] private Transform fpsCameraAnchor; // 술래일 때 시점 위치
+        [SerializeField] private GameObject gunModel; // 술래용 총 모델
         [SerializeField] private Vector3 cameraOffset = new Vector3(0, 3, -6); // 카메라 위치 오프셋
 
         [SerializeField] private GameObject bulletPrefab; // 탄환 프리팹
         
         private CharacterController controller;
         private Camera mainCamera;
+        private CameraMode currentCameraMode;
+        private Vector3 freeLookPosition; // 자유 시점용 카메라 위치
+        private bool? isLocalSeekerCached = null;
 
         // 네트워크 변수 : 이 값이 바뀌면 모든 클라이언트의 Render()가 감지합니다.
         [Networked, OnChangedRender(nameof(OnPropIDChanged))] public int CurrentPropID { get; set; } = -1; // -1은 기본 상태
@@ -34,6 +42,7 @@ namespace Bird.Network.Player
         [Networked] public TickTimer fireCooldown { get; set; }
         [Networked] private int activeBulletsFormLastShot { get; set; } = 0;
         [Networked] private bool didAnyBulletHit { get; set; } = false;
+        [Networked] public NetworkBool IsLocked { get; set; } // 도망자 고정 상태
 
         private void OnPropIDChanged() => UpdateAppearance();
         
@@ -61,7 +70,35 @@ namespace Bird.Network.Player
         // Fusion 2에서 [Networked] 변수가 변경될 때 시각적 업데이트를 처리하는 함수입니다.
         public override void Render()
         {
-            // 이제 OnPropIDChanged 콜백이 외형 업데이트를 담당하므로 여기서는 호출하지 않습니다.
+            if (HasInputAuthority && BirdGameManager.Instance != null)
+            {
+                var currentPhase = BirdGameManager.Instance.CurrentPhase;
+        
+                // 게임이 로비가 아니고, 술래가 누군지 확실히 정해졌을 때
+                if (currentPhase != GamePhase.Lobby && BirdGameManager.Instance.Seeker != PlayerRef.None)
+                {
+                    bool isSeeker = Runner.LocalPlayer == BirdGameManager.Instance.Seeker;
+            
+                    if (isLocalSeekerCached != isSeeker)
+                    {
+                        isLocalSeekerCached = isSeeker;
+                
+                        currentCameraMode = isSeeker ? CameraMode.FPS : CameraMode.TPS;
+                        if (gunModel != null) gunModel.SetActive(isSeeker);
+                
+                        Debug.Log($"[Bird] 역할 배정 감지 완료! 술래 여부: {isSeeker}. 시점을 전환합니다.");
+                    }
+                }
+            }
+        }
+
+        private void Update()
+        {
+            if (HasInputAuthority && Input.GetKeyDown(KeyCode.L))
+            {
+                ToggleLock();
+                Debug.Log($"[Bird] 시점 전환 토글! 현재 상태: {(IsLocked ? "해제" : "고정")}");
+            }
         }
 
         private void LateUpdate()
@@ -71,11 +108,29 @@ namespace Bird.Network.Player
                 // 카메라 회전 적용 (수평 회전만)
                 Quaternion rotation = Quaternion.Euler(CameraRotationHandler.CurrentPitch, CameraRotationHandler.CurrentYaw, 0);
                 
-                // 캐릭터 뒤편에 카메라 배치
-                Vector3 rotatedOffset = rotation * cameraOffset;
-                mainCamera.transform.position = transform.position + rotatedOffset;
-                
-                mainCamera.transform.rotation = rotation;
+                switch (currentCameraMode)
+                {
+                    case CameraMode.FPS:
+                        mainCamera.transform.position = fpsCameraAnchor.position;
+                        mainCamera.transform.rotation = rotation;
+                        break;
+
+                    case CameraMode.TPS:
+                        Vector3 rotatedOffset = rotation * cameraOffset;
+                        mainCamera.transform.position = transform.position + rotatedOffset;
+                        mainCamera.transform.rotation = rotation;
+                        break;
+
+                    case CameraMode.FreeLook:
+                        Vector3 joyInput = BirdInputManager.Movement;
+                        if (joyInput.sqrMagnitude < 0.01f)
+                        {
+                            joyInput = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
+                        }
+                        mainCamera.transform.position = CameraRotationHandler.GetFreeLookUpdate(mainCamera.transform, joyInput);
+                        mainCamera.transform.rotation = rotation;
+                        break;
+                }
             }
         }
 
@@ -88,6 +143,8 @@ namespace Bird.Network.Player
             // 서버로부터 내 입력 데이터를 가져옴
             if (GetInput(out BirdInputData data))
             {
+                if (CurrentHP <= 0 || IsLocked) return;
+                
                 // 이동 방향 계산 (입력 데이터에 담긴 LookYaw 값을 적용)
                 // 캐릭터가 카메라가 바라보는 방향을 기준으로 움직이게 합니다.
                 Quaternion lookRotation = Quaternion.Euler(0, data.LookYaw, 0);
@@ -172,6 +229,33 @@ namespace Bird.Network.Player
             controller.height = 2f;
             controller.radius = 0.5f;
         }
+        
+        private void ToggleLock()
+        {
+            if (!HasInputAuthority || CurrentHP <= 0) return;
+        
+            bool nextLockState = !IsLocked;
+
+            if (nextLockState)
+            {
+                CameraRotationHandler.SetInitialFreePos(mainCamera.transform.position);
+                currentCameraMode = CameraMode.FreeLook;
+            }
+            else // 고정 해제 (FreeLook -> TPS)
+            {
+                currentCameraMode = CameraMode.TPS;
+            }
+
+            // 서버에 상태 알림 (이동 제한용)
+            RPC_SetLocked(nextLockState);
+        }
+        
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        private void RPC_SetLocked(NetworkBool value)
+        {
+            IsLocked = value;
+        }
+        
 
         private void UpdatePlayerBehaviourByPhase()
         {
@@ -264,6 +348,7 @@ namespace Bird.Network.Player
             // 여기서는 단순하게 PropID를 -1(기본)로 돌리고 모델을 비활성화하는 방식을 제안합니다.
             if (HasStateAuthority)
             {
+                currentCameraMode = CameraMode.FreeLook;
                 CurrentPropID = -1;
             }
 

@@ -7,14 +7,15 @@ namespace Bird.Network.UI
     {
         public static float CurrentYaw { get; private set; }
         public static float CurrentPitch { get; private set; }
-
-
+        
+        private static Vector3 currentFreePos;
+        
         [SerializeField] private float sensitivity = 0.1f;
 
         // 카메라 상하 회전 제한
         [SerializeField] private float minPitch = -45f;
         [SerializeField] private float maxPitch = 45f;
-
+        
         public void OnDrag(PointerEventData eventData)
         {
             // 좌우 회전
@@ -25,5 +26,19 @@ namespace Bird.Network.UI
 
             CurrentPitch = Mathf.Clamp(CurrentPitch, minPitch, maxPitch);
         }
+        
+        public static Vector3 GetFreeLookUpdate(Transform camTransform,Vector3 inputVector)
+        {
+            Vector3 forward = camTransform.forward;
+            Vector3 right = camTransform.right;
+            
+            Vector3 moveDir = (forward * inputVector.z) + (right * inputVector.x);
+            
+            currentFreePos += moveDir * (10f * Time.deltaTime);
+        
+            return currentFreePos;
+        }
+        
+        public static void SetInitialFreePos(Vector3 pos) => currentFreePos = pos;
     }
 }
