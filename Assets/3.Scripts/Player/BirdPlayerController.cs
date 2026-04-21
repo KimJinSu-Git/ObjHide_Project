@@ -226,8 +226,8 @@ namespace Bird.Network.Player
         private void ResetCollider()
         {
             controller.center = new Vector3(0, 0, 0);
-            controller.height = 2f;
-            controller.radius = 0.5f;
+            controller.height = 1.5f;
+            controller.radius = 0.3f;
         }
         
         private void ToggleLock()
@@ -331,7 +331,7 @@ namespace Bird.Network.Player
             }
         }
 
-        public void Heal(int amount)
+        private void Heal(int amount)
         {
             if (!HasStateAuthority) return;
             CurrentHP = (int)MathF.Min(CurrentHP + amount, 100);
@@ -363,9 +363,9 @@ namespace Bird.Network.Player
         /// <summary>
         /// 총기 발사 버튼 클릭시 호출 될 함수
         /// </summary>
-        public void RequestFire()
+        private void RequestFire()
         {
-            if (!HasInputAuthority) return;
+            if (!HasInputAuthority || CurrentHP <= 0) return;
 
             if (!fireCooldown.ExpiredOrNotRunning(Runner) && fireCooldown.IsRunning) return;
 

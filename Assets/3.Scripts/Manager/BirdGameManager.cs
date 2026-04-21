@@ -92,10 +92,7 @@ namespace Bird.Network.Managers
 
             if (CurrentPhase == GamePhase.Lobby)
             {
-                if (Runner.ActivePlayers.Count() >= 2)
-                {
-                    StartGame();
-                }
+                // if (Runner.ActivePlayers.Count() >= 2) StartGame();
                 return;
             }
 
@@ -246,6 +243,18 @@ namespace Bird.Network.Managers
 
             // 도망자가 나간 경우
             CheckGameOver();
+        }
+
+        public void ManualStartGame()
+        {
+            if (!HasStateAuthority) return;
+
+            if (Runner.ActivePlayers.Count() < 2)
+            {
+                return;
+            }
+
+            StartGame();
         }
     }
 }

@@ -17,5 +17,5 @@ MonoBehaviour:
   PropPrefab: {fileID: 1962412856482775157, guid: e04bace0ed2208d4bb239278d7045539, type: 3}
   MaxHP: 100
   Center: {x: 0, y: 0, z: 0}
-  Radius: 0.5
+  Radius: 0.3
   Height: 1
