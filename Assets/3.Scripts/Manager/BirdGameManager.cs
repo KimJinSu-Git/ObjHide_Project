@@ -20,6 +20,9 @@ namespace Bird.Network.Managers
     {
         public static BirdGameManager Instance { get; private set; }
 
+        public static event Action<int, int> OnPlayerCountChanged; // 술래수, 도망자수
+        public static event Action<string, string> OnPlayerKilled; // 가해자 닉네임, 피해자 닉네임
+        
         // 서버에서만 수정 가능한 네트워크 변수
         [Networked] public TickTimer StateTimer { get; set; }
         [Networked] public GamePhase CurrentPhase { get; set; }
@@ -28,6 +31,9 @@ namespace Bird.Network.Managers
         [Networked] public int FinalSurvivorCount { get; set; }
         
         private ChangeDetector _changeDetector;
+        
+        private int _lastSeekerCount = -1;
+        private int _lastHiderCount = -1;
 
         public override void Spawned()
         {
@@ -123,10 +129,22 @@ namespace Bird.Network.Managers
             }
         }
 
+        public void NotifyPlayerKilled(PlayerRef attacker, PlayerRef victim)
+        {
+            if (!HasStateAuthority) return;
+
+            // Firebase 연동 시 여기서 닉네임을 조회
+            // PlayerRef 번호로 임시 처리
+            string attackerName = attacker == PlayerRef.None ? "System" : $"Player {attacker.PlayerId}";
+            string victimName = $"Player {victim.PlayerId}";
+
+            RPC_BroadcastKillLog(attackerName, victimName);
+        }
+        
         private void CheckGameOver()
         {
             int aliveHiders = 0;
-            bool isSeekerAlive = false;
+            int aliveSeekers = 0;
 
             foreach (var player in Runner.ActivePlayers)
             {
@@ -138,16 +156,23 @@ namespace Bird.Network.Managers
 
                 if (player == Seeker)
                 {
-                    isSeekerAlive = true;
+                    aliveSeekers++;
                 }
                 else
                 {
                     aliveHiders++;
                 }
             }
+            
+            if (_lastSeekerCount != aliveSeekers || _lastHiderCount != aliveHiders)
+            {
+                _lastSeekerCount = aliveSeekers;
+                _lastHiderCount = aliveHiders;
+                RPC_BroadcastPlayerCount(aliveSeekers, aliveHiders);
+            }
 
             // 술래가 죽었거나 도망자가 전멸했을 때 게임 종료
-            if (!isSeekerAlive)
+            if (aliveSeekers <= 0)
             {
                 EndGame(false, aliveHiders); // 도망자 승리
             }
@@ -181,6 +206,9 @@ namespace Bird.Network.Managers
             
             // 게임 시작
             SetPhase(GamePhase.Ready, 60f);
+            
+            RPC_BroadcastPlayerCount(1, Runner.ActivePlayers.Count() - 1);
+            
             Debug.Log($"[Bird] 게임 시작! 술래는 {Seeker}입니다.");
         }
 
@@ -255,6 +283,20 @@ namespace Bird.Network.Managers
             }
 
             StartGame();
+        }
+        
+        // 서버가 모든 클라이언트에게 인원수 갱신을 하라고 지시
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RPC_BroadcastPlayerCount(int seekers, int hiders)
+        {
+            OnPlayerCountChanged?.Invoke(seekers, hiders);
+        }
+
+        // 서버가 모든 클라이언트에게 킬 로그를 띄우라고 지시
+        [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+        private void RPC_BroadcastKillLog(string attackerName, string victimName)
+        {
+            OnPlayerKilled?.Invoke(attackerName, victimName);
         }
     }
 }

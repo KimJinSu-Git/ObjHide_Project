@@ -13,6 +13,11 @@ namespace Bird.Network.Player
     public class BirdPlayerController : NetworkBehaviour
     {
         public static BirdPlayerController Local { get; private set; }
+
+        public static event Action<int> OnLocalSpawned; // maxHP, currentHP
+        public static event Action<int> OnLocalHpChanged; // currentHP
+        public static event Action OnLocalDamaged; // 피격 시
+        public static event Action OnLocalDeath; // 사망 시
         
         [Header("Prop Settings")]
         [SerializeField] private PropDatabase propDatabase;
@@ -25,8 +30,6 @@ namespace Bird.Network.Player
         [SerializeField] private Transform fpsCameraAnchor; // 술래일 때 시점 위치
         [SerializeField] private GameObject gunModel; // 술래용 총 모델
         [SerializeField] private Vector3 cameraOffset = new Vector3(0, 3, -6); // 카메라 위치 오프셋
-
-        [SerializeField] private GameObject bulletPrefab; // 탄환 프리팹
         
         private CharacterController controller;
         private Camera mainCamera;
@@ -38,10 +41,9 @@ namespace Bird.Network.Player
         [Networked, OnChangedRender(nameof(OnPropIDChanged))] public int CurrentPropID { get; set; } = -1; // -1은 기본 상태
         private int lastAppliedPropID = -2; // 로컬에서만 체크하여 성능 최적화
         
-        [Networked] public int CurrentHP { get; set; }
+        [Networked, OnChangedRender(nameof(OnHPChanged))] public int CurrentHP { get; set; }
+        private int _lastHP = 100;
         [Networked] public TickTimer fireCooldown { get; set; }
-        [Networked] private int activeBulletsFormLastShot { get; set; } = 0;
-        [Networked] private bool didAnyBulletHit { get; set; } = false;
         [Networked] public NetworkBool IsLocked { get; set; } // 도망자 고정 상태
 
         private void OnPropIDChanged() => UpdateAppearance();
@@ -50,6 +52,7 @@ namespace Bird.Network.Player
         {
             controller = GetComponent<CharacterController>();
             mainCamera = Camera.main;
+            _lastHP = CurrentHP;
             
             // 내가 조종하는 캐릭터라면 카메라를 내 뒤로 배치 HasInputAuthority(이 캐릭터가 내 조이스틱 입력을 받는 주인공인가?를 묻는 질문입니다.)
             if (HasInputAuthority)
@@ -61,6 +64,8 @@ namespace Bird.Network.Player
                 {
                     FireButtonHandler.Instance.SetUpButton(RequestFire);
                 }
+                
+                OnLocalSpawned?.Invoke(CurrentHP);
             }
             
             // 초기 외형 설정
@@ -170,6 +175,21 @@ namespace Bird.Network.Player
             }
             
             UpdatePlayerBehaviourByPhase();
+        }
+        
+        private void OnHPChanged()
+        {
+            if (HasInputAuthority)
+            {
+                OnLocalHpChanged?.Invoke(CurrentHP);
+
+                // 방송: "방금 누가 나 때렸어! (데미지 입음)"
+                if (CurrentHP < _lastHP)
+                {
+                    OnLocalDamaged?.Invoke();
+                }
+            }
+            _lastHP = CurrentHP; // 갱신
         }
 
         private void UpdateAppearance()
@@ -307,7 +327,7 @@ namespace Bird.Network.Player
             }
         }
 
-        public void TakeDamage(int damage, PlayerRef attacker)
+        private void TakeDamage(int damage, PlayerRef attacker)
         {
             if (!HasStateAuthority) return;
             if (CurrentHP <= 0) return;
@@ -317,6 +337,8 @@ namespace Bird.Network.Player
             
             if (CurrentHP <= 0)
             {
+                BirdGameManager.Instance.NotifyPlayerKilled(attacker, Object.InputAuthority);
+                
                 // 도망자가 죽었을 때 술래의 체력을 회복 시킴
                 if (attacker != PlayerRef.None && attacker != Object.InputAuthority)
                 {
@@ -348,9 +370,24 @@ namespace Bird.Network.Player
             // 여기서는 단순하게 PropID를 -1(기본)로 돌리고 모델을 비활성화하는 방식을 제안합니다.
             if (HasStateAuthority)
             {
-                currentCameraMode = CameraMode.FreeLook;
                 CurrentPropID = -1;
             }
+            
+            if (HasInputAuthority)
+            {
+                Vector3 deathPos = transform.position + cameraOffset;
+                CameraRotationHandler.SetInitialFreePos(deathPos); // 자유 시점 기준점 초기화
+                
+                if (mainCamera != null)
+                {
+                    mainCamera.transform.position = deathPos;
+                }
+
+                currentCameraMode = CameraMode.FreeLook;
+                
+                OnLocalDeath?.Invoke();
+            }
+            
 
             // 시각적 비활성화 (모든 클라이언트)
             if (meshContainer != null) meshContainer.gameObject.SetActive(false);
@@ -366,75 +403,62 @@ namespace Bird.Network.Player
         private void RequestFire()
         {
             if (!HasInputAuthority || CurrentHP <= 0) return;
-
             if (!fireCooldown.ExpiredOrNotRunning(Runner) && fireCooldown.IsRunning) return;
 
             // 쿨타임 1초 설정
             fireCooldown = TickTimer.CreateFromSeconds(Runner, 1f);
             
+            Vector3 fireOrigin = mainCamera.transform.position; 
             Vector3 fireDirection = mainCamera.transform.forward;
             
-            RPC_SpawnProjectile(transform.position + transform.forward * 1f, fireDirection);
-        }
-
-        // 총알이 명중했을 때 호출
-        public void NotifyBulletHit()
-        {
-            didAnyBulletHit = true;
-            activeBulletsFormLastShot--;
-            CheckShotResult();
-        }
-
-        // 총알이 빗나가서 소멸했을 때 호출
-        public void NotifyBulletMiss()
-        {
-            activeBulletsFormLastShot--;
-            CheckShotResult();
-        }
-
-        private void CheckShotResult()
-        {
-            // 발사한 5발이 모두 처리가 끝났을 때
-            if (activeBulletsFormLastShot <= 0)
-            {
-                // 단 한발도 명중하지 못했을 때
-                if (!didAnyBulletHit)
-                {
-                    if (BirdGameManager.Instance.CurrentPhase == GamePhase.Fever)
-                    {
-                        Debug.Log("[Bird] 피버 타임! 페널티 없이 사격합니다.");
-                        return; 
-                    }
-                    
-                    Debug.Log("[Bird] 한 발도 명중하지 못했으므로 페널티가 부여됩니다");
-                    TakeDamage(10, Object.InputAuthority);
-                }
-                else
-                {
-                    Debug.Log("[Bird] 적중한 탄환이 있어 페널티를 면제합니다.");
-                }
-            }
+            RPC_FireHitscan(fireOrigin, fireDirection);
         }
         
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-        private void RPC_SpawnProjectile(Vector3 origin, Vector3 direction)
+        private void RPC_FireHitscan(Vector3 origin, Vector3 direction)
         {
-            activeBulletsFormLastShot = 5;
-            didAnyBulletHit = false;
+            bool hitAnything = false;
+            
+            int layerMask = LayerMask.GetMask("PropPlayer", "Environment");
             
             for (int i = 0; i < 5; i++)
             {
+                // 탄퍼짐 계산
                 Vector3 spread = new Vector3(Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f));
-                Quaternion rotation = Quaternion.LookRotation(direction + spread);
+                Vector3 finalDirection = (direction + spread).normalized;
 
-                var bulletObj = Runner.Spawn(bulletPrefab, origin, rotation, Object.InputAuthority);
-                
-                var bulletScript = bulletObj.GetComponent<BirdBullet>();
-                if (bulletScript != null)
+                // 즉발 레이저 발사
+                if (Physics.Raycast(origin, finalDirection, out RaycastHit hit, 100f, layerMask))
                 {
-                    bulletScript.Owner = Object.InputAuthority;
-                    bulletScript.Setup(this);
+                    // 맞은 물체가 도망자(PropPlayer) 레이어일 때
+                    if (hit.collider.gameObject.layer == LayerMask.NameToLayer("PropPlayer"))
+                    {
+                        var target = hit.collider.GetComponentInParent<BirdPlayerController>();
+                        // 내가 나를 쏜 게 아니라면
+                        if (target != null && target.Object.InputAuthority != Object.InputAuthority)
+                        {
+                            hitAnything = true; // 단 한 발이라도 맞았으므로 페널티 면제
+                            target.TakeDamage(10, Object.InputAuthority);
+                        }
+                    }
                 }
+            }
+            
+            if (!hitAnything)
+            {
+                if (BirdGameManager.Instance.CurrentPhase == GamePhase.Fever)
+                {
+                    Debug.Log("[Bird] 피버 타임! 페널티 없이 사격합니다.");
+                }
+                else
+                {
+                    Debug.Log("[Bird] 한 발도 명중하지 못했으므로 페널티가 부여됩니다.");
+                    TakeDamage(5, Object.InputAuthority);
+                }
+            }
+            else
+            {
+                Debug.Log("[Bird] 적중한 탄환이 있어 페널티를 면제합니다.");
             }
         }
         
