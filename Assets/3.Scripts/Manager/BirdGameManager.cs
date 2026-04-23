@@ -118,7 +118,7 @@ namespace Bird.Network.Managers
                         var obj = Runner.GetPlayerObject(p);
                         if (obj == null) return false;
                         var ctrl = obj.GetComponent<BirdPlayerController>();
-                        return p != Seeker && ctrl != null && ctrl.CurrentHP > 0;
+                        return p != Seeker && ctrl != null && ctrl.Health.CurrentHP > 0;
                     });
                     EndGame(false, survivors); 
                 }
@@ -152,7 +152,7 @@ namespace Bird.Network.Managers
                 if (playerObj == null) continue;
 
                 var controller = playerObj.GetComponent<BirdPlayerController>();
-                if (controller == null || controller.CurrentHP <= 0) continue;
+                if (controller == null || controller.Health.CurrentHP <= 0) continue;
 
                 if (player == Seeker)
                 {

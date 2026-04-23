@@ -24,12 +24,12 @@ namespace Bird.Network.UI
         
         private void OnEnable()
         {
-            BirdPlayerController.OnLocalDamaged += ShowDamageFlash;
+            BirdPlayerHealth.OnLocalDamaged += ShowDamageFlash;
         }
 
         private void OnDisable()
         {
-            BirdPlayerController.OnLocalDamaged -= ShowDamageFlash;
+            BirdPlayerHealth.OnLocalDamaged -= ShowDamageFlash;
         }
 
         private void ShowDamageFlash()
@@ -43,7 +43,7 @@ namespace Bird.Network.UI
         private IEnumerator Co_FlashRed()
         {
             Color c = damageFlashImage.color;
-            c.a = 0.5f; // 최고 투명도 (너무 진하면 시야를 가림)
+            c.a = 0.5f; 
             damageFlashImage.color = c;
 
             float elapsed = 0f;

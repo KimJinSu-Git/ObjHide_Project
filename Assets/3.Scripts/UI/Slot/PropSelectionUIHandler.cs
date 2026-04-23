@@ -88,7 +88,7 @@ namespace Bird.Network.UI
             var myPlayer = BirdPlayerController.Local;
             if (myPlayer != null)
             {
-                myPlayer.RPC_RequestChangeProp(propID);
+                myPlayer.Visual.RPC_RequestChangeProp(propID);
             }
             CloseUI();
         }
