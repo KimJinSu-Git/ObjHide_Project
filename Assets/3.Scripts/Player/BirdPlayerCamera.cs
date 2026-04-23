@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
 using Bird.Network.Managers;
@@ -6,7 +7,7 @@ using Bird.Network.UI;
 namespace Bird.Network.Player
 {
     public enum CameraMode { FPS, TPS, FreeLook }
-    
+
     public class BirdPlayerCamera : NetworkBehaviour
     {
         [Header("Camera Settings")] 
@@ -19,12 +20,40 @@ namespace Bird.Network.Player
         private bool? isLocalSeekerCached = null;
         private BirdPlayerController _controller;
 
+        // 전략 저장소
+        private Dictionary<CameraMode, ICameraStrategy> _strategies;
+        private ICameraStrategy _currentStrategy;
+
         [Networked] public NetworkBool IsLocked { get; set; } 
 
         public override void Spawned()
         {
             _controller = GetComponent<BirdPlayerController>();
             mainCamera = Camera.main;
+
+            // 전략 클래스 초기화
+            _strategies = new Dictionary<CameraMode, ICameraStrategy>
+            {
+                { CameraMode.FPS, new FpsCameraStrategy() },
+                { CameraMode.TPS, new TpsCameraStrategy() },
+                { CameraMode.FreeLook, new FreeLookCameraStrategy() }
+            };
+            
+            // 초기 전략 설정 (TPS)
+            SetStrategy(CameraMode.TPS);
+            
+            if (HasInputAuthority)
+            {
+                BirdPlayerHealth.OnLocalDeath += HandlePlayerDeath;
+            }
+        }
+        
+        public override void Despawned(NetworkRunner runner, bool hasState)
+        {
+            if (HasInputAuthority)
+            {
+                BirdPlayerHealth.OnLocalDeath -= HandlePlayerDeath;
+            }
         }
 
         public override void Render()
@@ -38,46 +67,60 @@ namespace Bird.Network.Player
                     if (isLocalSeekerCached != isSeeker)
                     {
                         isLocalSeekerCached = isSeeker;
-                        currentCameraMode = isSeeker ? CameraMode.FPS : CameraMode.TPS;
+                        
+                        CameraMode nextMode = isSeeker ? CameraMode.FPS : CameraMode.TPS;
+                        SetStrategy(nextMode);
+                        
                         if (gunModel != null) gunModel.SetActive(isSeeker);
                     }
                 }
             }
         }
-
-        public void UpdateCamera()
+        
+        private void HandlePlayerDeath()
         {
-            if (!HasInputAuthority || mainCamera == null) return;
+            // 사망 시 시점을 죽은 위치로 초기화하고 자유 시점으로 전환
+            CameraRotationHandler.SetInitialFreePos(mainCamera.transform.position);
+            SetStrategy(CameraMode.FreeLook);
+    
+            if (gunModel != null) gunModel.SetActive(false);
+        }
 
-            Quaternion rotation = Quaternion.Euler(CameraRotationHandler.CurrentPitch, CameraRotationHandler.CurrentYaw, 0);
-            
-            switch (currentCameraMode)
+        private void SetStrategy(CameraMode mode)
+        {
+            if (_strategies.TryGetValue(mode, out var strategy))
             {
-                case CameraMode.FPS:
-                    mainCamera.transform.position = fpsCameraAnchor.position;
-                    mainCamera.transform.rotation = rotation;
-                    break;
-                case CameraMode.TPS:
-                    Vector3 rotatedOffset = rotation * cameraOffset;
-                    mainCamera.transform.position = transform.position + rotatedOffset;
-                    mainCamera.transform.rotation = rotation;
-                    break;
-                case CameraMode.FreeLook:
-                    Vector3 joyInput = BirdInputManager.Movement;
-                    if (joyInput.sqrMagnitude < 0.01f)
-                    {
-                        joyInput = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
-                    }
-                    mainCamera.transform.position = CameraRotationHandler.GetFreeLookUpdate(mainCamera.transform, joyInput);
-                    mainCamera.transform.rotation = rotation;
-                    break;
+                currentCameraMode = mode;
+                _currentStrategy = strategy;
+                _currentStrategy.OnEnter(mainCamera.transform, transform);
             }
         }
 
-        public void SetFreeLook(Vector3 position)
+        public void UpdateCamera()
         {
-            CameraRotationHandler.SetInitialFreePos(position);
-            currentCameraMode = CameraMode.FreeLook;
+            if (!HasInputAuthority || mainCamera == null || _currentStrategy == null) return;
+
+            // 전략 클래스에 넘겨줄 데이터 가방
+            CameraUpdateParams p = new CameraUpdateParams
+            {
+                Pitch = CameraRotationHandler.CurrentPitch,
+                Yaw = CameraRotationHandler.CurrentYaw,
+                Offset = cameraOffset,
+                Anchor = fpsCameraAnchor,
+                Input = GetCameraInput()
+            };
+
+            _currentStrategy.UpdateCamera(mainCamera.transform, transform, p);
+        }
+
+        private Vector3 GetCameraInput()
+        {
+            Vector3 joyInput = BirdInputManager.Movement;
+            if (joyInput.sqrMagnitude < 0.01f)
+            {
+                joyInput = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
+            }
+            return joyInput;
         }
 
         public void ToggleLock()
@@ -85,13 +128,14 @@ namespace Bird.Network.Player
             if (!HasInputAuthority || _controller.Health.CurrentHP <= 0) return;
         
             bool nextLockState = !IsLocked;
+            
             if (nextLockState)
             {
-                SetFreeLook(mainCamera.transform.position);
+                SetStrategy(CameraMode.FreeLook);
             }
             else
             {
-                currentCameraMode = CameraMode.TPS;
+                SetStrategy(CameraMode.TPS);
             }
             RPC_SetLocked(nextLockState);
         }
