@@ -1,0 +1,168 @@
+using System.Linq;
+using Bird.Network.Player;
+using Bird.Network.UI;
+using Fusion;
+using UnityEngine;
+
+namespace Bird.Network.Managers
+{
+    // --- Lobby State ---
+    public class LobbyState : IGameState
+    {
+        public void Enter(BirdGameManager manager) { }
+        public void FixedUpdate(BirdGameManager manager) { }
+        public void Exit(BirdGameManager manager) { }
+    }
+
+    // --- Ready State ---
+    public class ReadyState : IGameState
+    {
+        public void Enter(BirdGameManager manager)
+        {
+            // 타이머 초기화
+            if (manager.HasStateAuthority) manager.SetTimer(60f);
+
+            // 도망자에게 사물 선택 UI 표시
+            bool isSeeker = manager.Runner.LocalPlayer == manager.Seeker;
+            if (!isSeeker && PropSelectionUIHandler.Instance != null)
+            {
+                PropSelectionUIHandler.Instance.hasSelected = false;
+                PropSelectionUIHandler.Instance.OpenSelectionUI();
+            }
+        }
+
+        public void FixedUpdate(BirdGameManager manager)
+        {
+            if (manager.HasStateAuthority && manager.StateTimer.Expired(manager.Runner))
+            {
+                manager.SetPhase(GamePhase.Hide);
+            }
+        }
+
+        public void Exit(BirdGameManager manager)
+        {
+            if (PropSelectionUIHandler.Instance != null) PropSelectionUIHandler.Instance.CloseUI();
+        }
+    }
+
+    // --- Hide State (1차 라운드) ---
+    public class HideState : IGameState
+    {
+        public void Enter(BirdGameManager manager)
+        {
+            if (manager.HasStateAuthority) manager.SetTimer(120f);
+        }
+
+        public void FixedUpdate(BirdGameManager manager)
+        {
+            if (!manager.HasStateAuthority) return;
+
+            manager.CheckGameOver();
+            if (manager.StateTimer.Expired(manager.Runner))
+            {
+                manager.SetPhase(GamePhase.Reroll);
+            }
+        }
+
+        public void Exit(BirdGameManager manager) { }
+    }
+
+    // --- Reroll State ---
+    public class RerollState : IGameState
+    {
+        public void Enter(BirdGameManager manager)
+        {
+            if (manager.HasStateAuthority) manager.SetTimer(20f);
+
+            bool isSeeker = manager.Runner.LocalPlayer == manager.Seeker;
+            if (!isSeeker && PropSelectionUIHandler.Instance != null)
+            {
+                PropSelectionUIHandler.Instance.hasSelected = false;
+                PropSelectionUIHandler.Instance.OpenSelectionUI();
+            }
+        }
+
+        public void FixedUpdate(BirdGameManager manager)
+        {
+            if (manager.HasStateAuthority && manager.StateTimer.Expired(manager.Runner))
+            {
+                manager.SetPhase(GamePhase.Final);
+            }
+        }
+
+        public void Exit(BirdGameManager manager)
+        {
+            if (PropSelectionUIHandler.Instance != null) PropSelectionUIHandler.Instance.CloseUI();
+        }
+    }
+
+    // --- Final State (2차 라운드) ---
+    public class FinalState : IGameState
+    {
+        public void Enter(BirdGameManager manager)
+        {
+            if (manager.HasStateAuthority) manager.SetTimer(70f);
+        }
+
+        public void FixedUpdate(BirdGameManager manager)
+        {
+            if (!manager.HasStateAuthority) return;
+
+            manager.CheckGameOver();
+            if (manager.StateTimer.Expired(manager.Runner))
+            {
+                manager.SetPhase(GamePhase.Fever);
+            }
+        }
+
+        public void Exit(BirdGameManager manager) { }
+    }
+
+    // --- Fever State ---
+    public class FeverState : IGameState
+    {
+        public void Enter(BirdGameManager manager)
+        {
+            if (manager.HasStateAuthority) manager.SetTimer(30f);
+        }
+
+        public void FixedUpdate(BirdGameManager manager)
+        {
+            if (!manager.HasStateAuthority) return;
+
+            manager.CheckGameOver();
+            if (manager.StateTimer.Expired(manager.Runner))
+            {
+                int survivors = manager.Runner.ActivePlayers.Count(p => {
+                    var obj = manager.Runner.GetPlayerObject(p);
+                    if (obj == null) return false;
+                    var ctrl = obj.GetComponent<BirdPlayerController>();
+                    return p != manager.Seeker && ctrl != null && ctrl.Health.CurrentHP > 0;
+                });
+                manager.EndGame(false, survivors); 
+            }
+        }
+
+        public void Exit(BirdGameManager manager) { }
+    }
+
+    // --- Result State ---
+    public class ResultState : IGameState
+    {
+        public void Enter(BirdGameManager manager)
+        {
+            if (manager.HasStateAuthority) manager.SetTimer(20f);
+            if (ResultUIHandler.Instance != null)
+            {
+                ResultUIHandler.Instance.ShowResult(manager.IsSeekerWin, manager.FinalSurvivorCount);
+            }
+        }
+
+        public void FixedUpdate(BirdGameManager manager) { }
+
+        public void Exit(BirdGameManager manager)
+        {
+            if (ResultUIHandler.Instance != null) ResultUIHandler.Instance.CloseUI();
+        }
+    }
+}

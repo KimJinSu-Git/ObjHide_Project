@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Bird.Network.Player;
 using Bird.Network.UI;
@@ -16,14 +17,13 @@ namespace Bird.Network.Managers
     /// - 확장성 : 나중에 새로운 규칙을 넣고 싶을 때, 새로운 페이즈 하나만 추가하면 기존 코드를 건드리지 않고 깔끔하게 삽입 가능합니다.
     /// </summary>
     public enum GamePhase { Lobby, Ready, Hide, Reroll, Final, Fever, Result}
+    
     public class BirdGameManager : NetworkBehaviour
     {
         public static BirdGameManager Instance { get; private set; }
 
-        public static event Action<int, int> OnPlayerCountChanged; // 술래수, 도망자수
-        public static event Action<string, string> OnPlayerKilled; // 가해자 닉네임, 피해자 닉네임
-        
-        // 서버에서만 수정 가능한 네트워크 변수
+        public static event Action<int, int> OnPlayerCountChanged;
+        public static event Action<string, string> OnPlayerKilled;
         [Networked] public TickTimer StateTimer { get; set; }
         [Networked] public GamePhase CurrentPhase { get; set; }
         [Networked] public PlayerRef Seeker { get; set; }
@@ -32,117 +32,81 @@ namespace Bird.Network.Managers
         
         private ChangeDetector _changeDetector;
         
+        // 상태 패턴 필드
+        private Dictionary<GamePhase, IGameState> _states;
+        private IGameState _currentState;
+        
         private int _lastSeekerCount = -1;
         private int _lastHiderCount = -1;
 
         public override void Spawned()
         {
             Instance = this;
-            
             _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
-            Debug.Log("[Bird] 게임 매니저 네트워크 스폰 완료");
-            UpdateUIForPhase(CurrentPhase);
+
+            // 상태 저장소 초기화
+            _states = new Dictionary<GamePhase, IGameState>
+            {
+                { GamePhase.Lobby, new LobbyState() },
+                { GamePhase.Ready, new ReadyState() },
+                { GamePhase.Hide, new HideState() },
+                { GamePhase.Reroll, new RerollState() },
+                { GamePhase.Final, new FinalState() },
+                { GamePhase.Fever, new FeverState() },
+                { GamePhase.Result, new ResultState() }
+            };
+
+            // 초기 상태 설정
+            TransitionToState(CurrentPhase);
         }
 
         public override void Render()
         {
-            // 3. 매 프레임 네트워크 변수의 변경을 감지 (이전 값과 달라졌을 때만 실행됨)
             foreach (var change in _changeDetector.DetectChanges(this))
             {
                 switch (change)
                 {
                     case nameof(CurrentPhase):
-                        UpdateUIForPhase(CurrentPhase);
+                        TransitionToState(CurrentPhase);
                         break;
                 }
             }
         }
 
-        private void UpdateUIForPhase(GamePhase newPhase)
+        private void TransitionToState(GamePhase nextPhase)
         {
-            if (newPhase == GamePhase.Result)
+            _currentState?.Exit(this);
+            
+            if (_states.TryGetValue(nextPhase, out var newState))
             {
-                if (ResultUIHandler.Instance != null)
-                {
-                    ResultUIHandler.Instance.ShowResult(IsSeekerWin, FinalSurvivorCount);
-                }
-            }
-            else
-            {
-                if (ResultUIHandler.Instance != null) ResultUIHandler.Instance.CloseUI();
-                
-                bool isSeeker = Runner.LocalPlayer == Seeker;
-
-                if (!isSeeker && (newPhase == GamePhase.Ready || newPhase == GamePhase.Reroll))
-                {
-                    if (PropSelectionUIHandler.Instance != null)
-                    {
-                        PropSelectionUIHandler.Instance.hasSelected = false;
-                        PropSelectionUIHandler.Instance.OpenSelectionUI();
-                    }
-                }
-                else
-                {
-                    if (PropSelectionUIHandler.Instance != null)
-                    {
-                        PropSelectionUIHandler.Instance.CloseUI();
-                    }
-                }
+                _currentState = newState;
+                _currentState.Enter(this);
+                Debug.Log($"[Bird] 페이즈 전환: {nextPhase}");
             }
         }
 
         public override void FixedUpdateNetwork()
         {
-            // 서버만 게임의 흐름을 통제할 권한이 있어야 합니다.
-            if (!HasStateAuthority) return;
-
-            if (CurrentPhase == GamePhase.Lobby)
-            {
-                // if (Runner.ActivePlayers.Count() >= 2) StartGame();
-                return;
-            }
-
-            // 게임 진행 중일 때만 승패 판정 체크 (Ready 제외)
-            if (CurrentPhase != GamePhase.Ready && CurrentPhase != GamePhase.Result)
-            {
-                CheckGameOver();
-            }
-
-            // 타이머가 만료되었을 때 다음 단계로 진행
-            if (StateTimer.Expired(Runner))
-            {
-                if (CurrentPhase == GamePhase.Fever)
-                {
-                    // 시간 종료 시 현재 생존해 있는 도망자 수를 계산하여 전달
-                    int survivors = Runner.ActivePlayers.Count(p => {
-                        var obj = Runner.GetPlayerObject(p);
-                        if (obj == null) return false;
-                        var ctrl = obj.GetComponent<BirdPlayerController>();
-                        return p != Seeker && ctrl != null && ctrl.Health.CurrentHP > 0;
-                    });
-                    EndGame(false, survivors); 
-                }
-                else
-                {
-                    AdvancePhase();
-                }
-            }
+            // 현재 상태의 로직 실행
+            _currentState?.FixedUpdate(this);
         }
 
-        public void NotifyPlayerKilled(PlayerRef attacker, PlayerRef victim)
+        public void SetPhase(GamePhase nextPhase)
+        {
+            if (!HasStateAuthority) return;
+            CurrentPhase = nextPhase;
+        }
+
+        public void SetTimer(float duration)
+        {
+            if (!HasStateAuthority) return;
+            StateTimer = TickTimer.CreateFromSeconds(Runner, duration);
+        }
+
+        public void CheckGameOver()
         {
             if (!HasStateAuthority) return;
 
-            // Firebase 연동 시 여기서 닉네임을 조회
-            // PlayerRef 번호로 임시 처리
-            string attackerName = attacker == PlayerRef.None ? "System" : $"Player {attacker.PlayerId}";
-            string victimName = $"Player {victim.PlayerId}";
-
-            RPC_BroadcastKillLog(attackerName, victimName);
-        }
-        
-        private void CheckGameOver()
-        {
             int aliveHiders = 0;
             int aliveSeekers = 0;
 
@@ -154,14 +118,8 @@ namespace Bird.Network.Managers
                 var controller = playerObj.GetComponent<BirdPlayerController>();
                 if (controller == null || controller.Health.CurrentHP <= 0) continue;
 
-                if (player == Seeker)
-                {
-                    aliveSeekers++;
-                }
-                else
-                {
-                    aliveHiders++;
-                }
+                if (player == Seeker) aliveSeekers++;
+                else aliveHiders++;
             }
             
             if (_lastSeekerCount != aliveSeekers || _lastHiderCount != aliveHiders)
@@ -171,30 +129,31 @@ namespace Bird.Network.Managers
                 RPC_BroadcastPlayerCount(aliveSeekers, aliveHiders);
             }
 
-            // 술래가 죽었거나 도망자가 전멸했을 때 게임 종료
-            if (aliveSeekers <= 0)
-            {
-                EndGame(false, aliveHiders); // 도망자 승리
-            }
-            else if (aliveHiders <= 0)
-            {
-                EndGame(true, 0); // 술래 승리
-            }
+            if (aliveSeekers <= 0) EndGame(false, aliveHiders);
+            else if (aliveHiders <= 0) EndGame(true, 0);
         }
 
-        private void EndGame(bool seekerWin, int survivorCount)
+        public void EndGame(bool seekerWin, int survivorCount)
         {
             if (CurrentPhase == GamePhase.Result) return;
             
             IsSeekerWin = seekerWin;
             FinalSurvivorCount = survivorCount;
-            
-            Debug.Log($"[Bird] 게임 종료! 승리팀: {(seekerWin ? "술래" : "도망자")}, 생존자: {survivorCount}");
-            SetPhase(GamePhase.Result, 20f); // 20초 동안 결과 창 표시
+            SetPhase(GamePhase.Result);
         }
 
-        private void StartGame()
+        public void NotifyPlayerKilled(PlayerRef attacker, PlayerRef victim)
         {
+            if (!HasStateAuthority) return;
+            string attackerName = attacker == PlayerRef.None ? "System" : $"Player {attacker.PlayerId}";
+            string victimName = $"Player {victim.PlayerId}";
+            RPC_BroadcastKillLog(attackerName, victimName);
+        }
+
+        public void ManualStartGame()
+        {
+            if (!HasStateAuthority || Runner.ActivePlayers.Count() < 2) return;
+
             // 랜덤 술래 정하기
             int randomIndex = Random.Range(0, Runner.ActivePlayers.Count());
             int i = 0;
@@ -204,42 +163,10 @@ namespace Bird.Network.Managers
                 i++;
             }
             
-            // 게임 시작
-            SetPhase(GamePhase.Ready, 60f);
-            
+            SetPhase(GamePhase.Ready);
             RPC_BroadcastPlayerCount(1, Runner.ActivePlayers.Count() - 1);
-            
-            Debug.Log($"[Bird] 게임 시작! 술래는 {Seeker}입니다.");
         }
 
-        private void AdvancePhase()
-        {
-            switch (CurrentPhase)
-            {
-                case GamePhase.Ready: 
-                    SetPhase(GamePhase.Hide, 120f); // 120초동안 1차 라운드 시작
-                    break;
-                case GamePhase.Hide:
-                    SetPhase(GamePhase.Reroll, 20f); // 20초 동안 사물 리롤 시작
-                    break;
-                case GamePhase.Reroll:
-                    SetPhase(GamePhase.Final, 70f); // 70초 동안 2차 라운드 시작
-                    break;
-                case GamePhase.Final:
-                    SetPhase(GamePhase.Fever, 30f); // 피버타임 (30초동안 술래 피 소모 없음)
-                    break;
-                case GamePhase.Fever:
-                    SetPhase(GamePhase.Result, 20f); // 20초 동안 결과 창 보여주기
-                    break;
-            }
-        }
-
-        private void SetPhase(GamePhase nextPhase, float duration)
-        {
-            CurrentPhase = nextPhase;
-            StateTimer = TickTimer.CreateFromSeconds(Runner, duration);
-        }
-        
         /// <summary>
         /// 플레이어 퇴장 시 호출되어 게임 지속 가능 여부를 판정합니다. (서버 전용)
         /// </summary>
@@ -252,51 +179,31 @@ namespace Bird.Network.Managers
 
             int activeCount = Runner.ActivePlayers.Count();
 
+            // 혼자 남은 경우 강제 종료
             if (activeCount <= 1)
             {
                 Debug.Log("[Bird] 인원 부족으로 게임을 강제 종료합니다.");
-                // 혼자 남은 사람이 술래라면 술래 승, 도망자라면 도망자 승으로 처리
                 bool isRemainingSeeker = (Seeker != leftPlayer); 
                 EndGame(isRemainingSeeker, activeCount);
                 return;
             }
 
-            // 술래가 나간 경우 경우
+            // 술래가 나간 경우
             if (Seeker == leftPlayer)
             {
                 Debug.Log("[Bird] 술래가 도주했습니다! 도망자의 승리입니다.");
-                EndGame(false, activeCount); // 도망자 승리
+                EndGame(false, activeCount);
                 return;
             }
 
-            // 도망자가 나간 경우
+            // 도망자가 나간 경우 승패 다시 체크
             CheckGameOver();
         }
 
-        public void ManualStartGame()
-        {
-            if (!HasStateAuthority) return;
-
-            if (Runner.ActivePlayers.Count() < 2)
-            {
-                return;
-            }
-
-            StartGame();
-        }
-        
-        // 서버가 모든 클라이언트에게 인원수 갱신을 하라고 지시
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-        private void RPC_BroadcastPlayerCount(int seekers, int hiders)
-        {
-            OnPlayerCountChanged?.Invoke(seekers, hiders);
-        }
+        private void RPC_BroadcastPlayerCount(int seekers, int hiders) => OnPlayerCountChanged?.Invoke(seekers, hiders);
 
-        // 서버가 모든 클라이언트에게 킬 로그를 띄우라고 지시
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-        private void RPC_BroadcastKillLog(string attackerName, string victimName)
-        {
-            OnPlayerKilled?.Invoke(attackerName, victimName);
-        }
+        private void RPC_BroadcastKillLog(string attackerName, string victimName) => OnPlayerKilled?.Invoke(attackerName, victimName);
     }
 }
