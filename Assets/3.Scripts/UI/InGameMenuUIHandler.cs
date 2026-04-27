@@ -16,7 +16,7 @@ namespace Bird.Network.UI
         [SerializeField] private Button resumeButton;
         [SerializeField] private Button quitButton;
 
-        private NetworkRunner runner;
+        private NetworkRunner _runner;
 
         private void Awake()
         {
@@ -28,7 +28,7 @@ namespace Bird.Network.UI
 
         private void Start()
         {
-            runner = FindObjectOfType<NetworkRunner>();
+            _runner = FindObjectOfType<NetworkRunner>();
         }
 
         public void OpenMenu()
@@ -48,9 +48,9 @@ namespace Bird.Network.UI
         {
             quitButton.interactable = false; // 중복 클릭 방지
 
-            if (runner != null && runner.IsRunning)
+            if (_runner != null && _runner.IsRunning)
             {
-                await runner.Shutdown();
+                await _runner.Shutdown();
             }
             else
             {

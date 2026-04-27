@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Bird.Network.Data;
+using Bird.Network.Managers;
 using Bird.Network.Player;
 using TMPro;
 using UnityEngine;
@@ -10,8 +11,6 @@ namespace Bird.Network.UI
 {
     public class PropSelectionUIHandler : MonoBehaviour
     {
-        public static PropSelectionUIHandler Instance { get; private set; }
-        
         [SerializeField] private GameObject panel; // 슬롯머신 전체 패널
         [SerializeField] private BirdPropSlotUI[] slots; // 3개의 슬롯
         [SerializeField] private PropDatabase propDatabase;
@@ -23,10 +22,38 @@ namespace Bird.Network.UI
 
         private void Awake()
         {
-            Instance = this;
+            panel.SetActive(false);
+        }
+        
+        private IEnumerator Start()
+        {
+            while (BirdGameManager.Instance == null)
+            {
+                yield return null;
+            }
+
+            BirdGameManager.Instance.OnSelectionPhaseStarted += HandleSelectionStarted;
+            BirdGameManager.Instance.OnSelectionPhaseEnded += CloseUI;
         }
 
-        public void OpenSelectionUI()
+        private void OnDisable()
+        {
+            if (BirdGameManager.Instance != null)
+            {
+                BirdGameManager.Instance.OnSelectionPhaseStarted -= HandleSelectionStarted;
+                BirdGameManager.Instance.OnSelectionPhaseEnded -= CloseUI;
+            }
+        }
+        
+        private void HandleSelectionStarted(bool isSeeker)
+        {
+            if (isSeeker) return; 
+            
+            hasSelected = false;
+            OpenSelectionUI();
+        }
+
+        private void OpenSelectionUI()
         {
             if (hasSelected) return;
             
@@ -85,7 +112,7 @@ namespace Bird.Network.UI
         {
             hasSelected = true;
             // 내 캐릭터 컨트롤러를 찾아 RPC 호출
-            var myPlayer = BirdPlayerController.Local;
+            var myPlayer = BirdPlayerController.Instance;
             if (myPlayer != null)
             {
                 myPlayer.Visual.RPC_RequestChangeProp(propID);

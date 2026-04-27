@@ -1,4 +1,5 @@
 using System.Collections;
+using Bird.Network.Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,8 +10,6 @@ namespace Bird.Network.UI
 {
     public class ResultUIHandler : MonoBehaviour
     {
-        public static ResultUIHandler Instance { get; private set; }
-        
         [Header("UI Elements")]
         [SerializeField] private GameObject resultPanel;
         [SerializeField] private CanvasGroup canvasGroup;
@@ -20,14 +19,32 @@ namespace Bird.Network.UI
 
         private void Awake()
         {
-            Instance = this;
             resultPanel.SetActive(false);
             if (canvasGroup != null) canvasGroup.alpha = 0;
-            
             lobbyButton.onClick.AddListener(OnLobbyButtonClicked);
         }
 
-        public void ShowResult(bool isSeekerWin, int survivorCount)
+        private IEnumerator Start()
+        {
+            while (BirdGameManager.Instance == null)
+            {
+                yield return null;
+            }
+
+            BirdGameManager.Instance.OnGameResult += ShowResult;
+            BirdGameManager.Instance.OnGameResultEnded += CloseUI;
+        }
+
+        private void OnDisable()
+        {
+            if (BirdGameManager.Instance != null)
+            {
+                BirdGameManager.Instance.OnGameResult -= ShowResult;
+                BirdGameManager.Instance.OnGameResultEnded -= CloseUI;
+            }
+        }
+
+        private void ShowResult(bool isSeekerWin, int survivorCount)
         {
             resultPanel.SetActive(true);
 

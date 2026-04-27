@@ -18,28 +18,28 @@ namespace Bird.Network.UI
         private void OnEnable()
         {
             BirdPlayerController.OnLocalSpawned += InitializeHUD;
-            BirdPlayerHealth.OnLocalHpChanged += UpdateHP;
+            BirdPlayerHealth.OnLocalHpChanged += UpdateHp;
             BirdPlayerHealth.OnLocalDeath += HideHUD;
         }
 
         private void OnDisable()
         {
             BirdPlayerController.OnLocalSpawned -= InitializeHUD;
-            BirdPlayerHealth.OnLocalHpChanged -= UpdateHP;
+            BirdPlayerHealth.OnLocalHpChanged -= UpdateHp;
             BirdPlayerHealth.OnLocalDeath -= HideHUD;
         }
 
-        private void InitializeHUD(int currentHP)
+        private void InitializeHUD(int currentHp)
         {
             hpObject.SetActive(true);
-            UpdateHP(currentHP);
+            UpdateHp(currentHp);
         }
 
-        private void UpdateHP(int currentHP)
+        private void UpdateHp(int currentHp)
         {
             if (hpText != null)
             {
-                hpText.text = $"HP : {currentHP}";
+                hpText.text = $"HP : {currentHp}";
             }
         }
 

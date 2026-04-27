@@ -13,7 +13,7 @@ namespace Bird.Network.Player
         [Header("Camera Settings")] 
         [SerializeField] private Transform fpsCameraAnchor; 
         [SerializeField] private GameObject gunModel; 
-        [SerializeField] private Vector3 cameraOffset = new Vector3(0, 3, -6); 
+        [SerializeField] private Vector3 cameraOffset = new Vector3(0, 0.8f, -3); 
         
         private CameraMode currentCameraMode;
         private Camera mainCamera;

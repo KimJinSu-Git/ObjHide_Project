@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "267156803547",
+    "project_id": "birdprophunt",
+    "storage_bucket": "birdprophunt.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:267156803547:android:9223fbaf4e668e102aa1fe",
+        "android_client_info": {
+          "package_name": "com.hummingbird.birdprophunt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8UjiCuUKrA6qDvOzd1lHSlBiVBtxd-8U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

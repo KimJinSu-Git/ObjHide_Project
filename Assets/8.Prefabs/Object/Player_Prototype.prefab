@@ -318,7 +318,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fpsCameraAnchor: {fileID: 7367649192689927555}
   gunModel: {fileID: 3361578036490988494}
-  cameraOffset: {x: 0, y: 3, z: -6}
+  cameraOffset: {x: 0, y: 0.8, z: -3}
   _IsLocked:
     _value: 0
 --- !u!1 &7385346262265663982

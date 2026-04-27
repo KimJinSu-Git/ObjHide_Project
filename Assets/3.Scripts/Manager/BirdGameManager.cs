@@ -24,6 +24,13 @@ namespace Bird.Network.Managers
 
         public static event Action<int, int> OnPlayerCountChanged;
         public static event Action<string, string> OnPlayerKilled;
+        
+        public event Action<bool> OnSelectionPhaseStarted; // 매개변수: isSeeker (술래 여부)
+        public event Action OnSelectionPhaseEnded;
+
+        public event Action<bool, int> OnGameResult; // 매개변수: isSeekerWin, survivorCount
+        public event Action OnGameResultEnded;
+        
         [Networked] public TickTimer StateTimer { get; set; }
         [Networked] public GamePhase CurrentPhase { get; set; }
         [Networked] public PlayerRef Seeker { get; set; }
@@ -198,6 +205,18 @@ namespace Bird.Network.Managers
 
             // 도망자가 나간 경우 승패 다시 체크
             CheckGameOver();
+        }
+        
+        public void TriggerSelectionPhase(bool isSeeker, bool isStart)
+        {
+            if (isStart) OnSelectionPhaseStarted?.Invoke(isSeeker);
+            else OnSelectionPhaseEnded?.Invoke();
+        }
+
+        public void TriggerGameResult(bool isSeekerWin, int survivorCount, bool isStart)
+        {
+            if (isStart) OnGameResult?.Invoke(isSeekerWin, survivorCount);
+            else OnGameResultEnded?.Invoke();
         }
 
         [Rpc(RpcSources.StateAuthority, RpcTargets.All)]

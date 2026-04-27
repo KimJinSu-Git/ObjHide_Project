@@ -64,8 +64,8 @@ namespace Bird.Network.Player
         {
             Debug.Log($"{Object.InputAuthority} 플레이어 사망!");
             
-            // Visual에 사망 알림 (외형 숨기기 등)
-            GetComponent<BirdPlayerVisual>()?.HandleDeath();
+            // GetComponent<BirdPlayerVisual>()?.HandleDeath();
+            _controller.Visual?.HandleDeath();
 
             if (HasInputAuthority)
             {

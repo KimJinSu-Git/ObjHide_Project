@@ -13,7 +13,7 @@ namespace Bird.Network.Player
     [RequireComponent(typeof(BirdPlayerCamera))]
     public class BirdPlayerController : NetworkBehaviour
     {
-        public static BirdPlayerController Local { get; private set; }
+        public static BirdPlayerController Instance { get; private set; }
 
         public static event Action<int> OnLocalSpawned;
         
@@ -37,7 +37,7 @@ namespace Bird.Network.Player
             
             if (HasInputAuthority)
             {
-                Local = this;
+                Instance = this;
                 OnLocalSpawned?.Invoke(Health.CurrentHP);
             }
         }

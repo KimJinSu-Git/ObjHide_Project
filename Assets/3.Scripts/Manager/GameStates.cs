@@ -24,11 +24,7 @@ namespace Bird.Network.Managers
 
             // 도망자에게 사물 선택 UI 표시
             bool isSeeker = manager.Runner.LocalPlayer == manager.Seeker;
-            if (!isSeeker && PropSelectionUIHandler.Instance != null)
-            {
-                PropSelectionUIHandler.Instance.hasSelected = false;
-                PropSelectionUIHandler.Instance.OpenSelectionUI();
-            }
+            manager.TriggerSelectionPhase(isSeeker, true);
         }
 
         public void FixedUpdate(BirdGameManager manager)
@@ -41,7 +37,7 @@ namespace Bird.Network.Managers
 
         public void Exit(BirdGameManager manager)
         {
-            if (PropSelectionUIHandler.Instance != null) PropSelectionUIHandler.Instance.CloseUI();
+            manager.TriggerSelectionPhase(false, false);
         }
     }
 
@@ -75,11 +71,7 @@ namespace Bird.Network.Managers
             if (manager.HasStateAuthority) manager.SetTimer(20f);
 
             bool isSeeker = manager.Runner.LocalPlayer == manager.Seeker;
-            if (!isSeeker && PropSelectionUIHandler.Instance != null)
-            {
-                PropSelectionUIHandler.Instance.hasSelected = false;
-                PropSelectionUIHandler.Instance.OpenSelectionUI();
-            }
+            manager.TriggerSelectionPhase(isSeeker, true);
         }
 
         public void FixedUpdate(BirdGameManager manager)
@@ -92,7 +84,7 @@ namespace Bird.Network.Managers
 
         public void Exit(BirdGameManager manager)
         {
-            if (PropSelectionUIHandler.Instance != null) PropSelectionUIHandler.Instance.CloseUI();
+            manager.TriggerSelectionPhase(false, false);
         }
     }
 
@@ -152,17 +144,14 @@ namespace Bird.Network.Managers
         public void Enter(BirdGameManager manager)
         {
             if (manager.HasStateAuthority) manager.SetTimer(20f);
-            if (ResultUIHandler.Instance != null)
-            {
-                ResultUIHandler.Instance.ShowResult(manager.IsSeekerWin, manager.FinalSurvivorCount);
-            }
+            manager.TriggerGameResult(manager.IsSeekerWin, manager.FinalSurvivorCount, true);
         }
 
         public void FixedUpdate(BirdGameManager manager) { }
 
         public void Exit(BirdGameManager manager)
         {
-            if (ResultUIHandler.Instance != null) ResultUIHandler.Instance.CloseUI();
+            manager.TriggerGameResult(false, 0, false);
         }
     }
 }
