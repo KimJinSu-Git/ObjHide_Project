@@ -6,6 +6,8 @@ namespace Bird.Network.Managers
 {
     public class AuthFlowManager : MonoBehaviour
     {
+        public static string LocalNickname { get; private set; }
+        
         private void OnEnable()
         {
             FirebaseManager.OnLoginSuccess += HandleLoginSuccess;
@@ -35,6 +37,8 @@ namespace Bird.Network.Managers
             {
                 Debug.Log($"[AuthFlow] 기존 유저입니다. 환영합니다: {myNickname}");
             }
+            
+            LocalNickname = myNickname;
             
             await TransitionToLobby(myNickname);
         }

@@ -469,6 +469,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logText: {fileID: 847579268}
+  canvasGroup: {fileID: 847579270}
   displayDuration: 1.5
 --- !u!1 &71151720
 GameObject:
@@ -3018,6 +3019,7 @@ GameObject:
   - component: {fileID: 847579267}
   - component: {fileID: 847579269}
   - component: {fileID: 847579268}
+  - component: {fileID: 847579270}
   m_Layer: 5
   m_Name: LogText
   m_TagString: Untagged
@@ -3144,6 +3146,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 847579266}
   m_CullTransparentMesh: 1
+--- !u!225 &847579270
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 847579266}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &848340741
 GameObject:
   m_ObjectHideFlags: 0

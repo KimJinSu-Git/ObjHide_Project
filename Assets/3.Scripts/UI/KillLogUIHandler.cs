@@ -8,37 +8,71 @@ namespace Bird.Network.UI
 {
     public class KillLogUIHandler : MonoBehaviour
     {
+        [Header("UI Elements")]
         [SerializeField] private TextMeshProUGUI logText;
+        [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private float displayDuration = 1.5f;
 
         private Coroutine _logCoroutine;
-        
-        private void Awake() => logText.gameObject.SetActive(false);
+        private WaitForSeconds _waitForSeconds;
 
-        private void OnEnable()
+        private void Awake()
         {
-            BirdGameManager.OnPlayerKilled += ShowKillLog;
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0;
+            }
+            _waitForSeconds = new WaitForSeconds(displayDuration);
+        }
+
+        private IEnumerator Start()
+        {
+            while (BirdGameManager.Instance == null)
+            {
+                yield return null;
+            }
+
+            BirdGameManager.Instance.OnPlayerKilled += ShowKillLog;
         }
 
         private void OnDisable()
         {
-            BirdGameManager.OnPlayerKilled -= ShowKillLog;
+            if (BirdGameManager.Instance != null)
+            {
+                BirdGameManager.Instance.OnPlayerKilled -= ShowKillLog;
+            }
         }
         
         private void ShowKillLog(string attacker, string victim)
         {
             if (_logCoroutine != null) StopCoroutine(_logCoroutine);
-            _logCoroutine = StartCoroutine(Co_ProcessLog(attacker, victim));
+            
+            logText.text = $"<color=#FF5555>{attacker}</color> caught <color=#55AAFF>{victim}</color>";
+            
+            _logCoroutine = StartCoroutine(Co_ProcessLog());
         }
         
-        private IEnumerator Co_ProcessLog(string attacker, string victim)
+        private IEnumerator Co_ProcessLog()
         {
-            logText.gameObject.SetActive(true);
-            logText.text = $"<color=red>{attacker}</color> caught <color=yellow>{victim}</color>!";
+            float elapsed = 0;
+            while (elapsed < 0.2f)
+            {
+                elapsed += Time.deltaTime;
+                canvasGroup.alpha = Mathf.Lerp(0, 1, elapsed / 0.2f);
+                yield return null;
+            }
+            canvasGroup.alpha = 1;
+            
+            yield return _waitForSeconds;
 
-            yield return new WaitForSeconds(displayDuration);
-
-            logText.gameObject.SetActive(false);
+            elapsed = 0;
+            while (elapsed < 0.5f)
+            {
+                elapsed += Time.deltaTime;
+                canvasGroup.alpha = Mathf.Lerp(1, 0, elapsed / 0.5f);
+                yield return null;
+            }
+            canvasGroup.alpha = 0;
         }
     }
 }

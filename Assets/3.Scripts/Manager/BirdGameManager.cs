@@ -23,7 +23,7 @@ namespace Bird.Network.Managers
         public static BirdGameManager Instance { get; private set; }
 
         public static event Action<int, int> OnPlayerCountChanged;
-        public static event Action<string, string> OnPlayerKilled;
+        public event Action<string, string> OnPlayerKilled;
         
         public event Action<bool> OnSelectionPhaseStarted; // 매개변수: isSeeker (술래 여부)
         public event Action OnSelectionPhaseEnded;
@@ -152,8 +152,30 @@ namespace Bird.Network.Managers
         public void NotifyPlayerKilled(PlayerRef attacker, PlayerRef victim)
         {
             if (!HasStateAuthority) return;
-            string attackerName = attacker == PlayerRef.None ? "System" : $"Player {attacker.PlayerId}";
-            string victimName = $"Player {victim.PlayerId}";
+
+            string attackerName = "System";
+            string victimName = "Unknown";
+
+            if (attacker != PlayerRef.None)
+            {
+                var attackerObj = Runner.GetPlayerObject(attacker);
+                if (attackerObj != null)
+                {
+                    var identity = attackerObj.GetComponent<BirdPlayerIdentity>();
+                    if (identity != null) attackerName = identity.Nickname.ToString();
+                }
+            }
+
+            if (victim != PlayerRef.None)
+            {
+                var victimObj = Runner.GetPlayerObject(victim);
+                if (victimObj != null)
+                {
+                    var identity = victimObj.GetComponent<BirdPlayerIdentity>();
+                    if (identity != null) victimName = identity.Nickname.ToString();
+                }
+            }
+            
             RPC_BroadcastKillLog(attackerName, victimName);
         }
 
