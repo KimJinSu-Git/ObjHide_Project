@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace Bird.Network.Managers
 {
+    /// <summary>
+    /// 확보된 UID로 실시간 데이터베이스에 접속하여 닉네임을 로드합니다.
+    /// </summary>
     public class FirebaseDatabaseManager : MonoBehaviour
     {
         public static FirebaseDatabaseManager Instance { get; private set; }

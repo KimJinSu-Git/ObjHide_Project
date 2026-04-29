@@ -14,7 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PropID: 4
   PropName: Bottle
-  PropPrefab: {fileID: 8465393335591359958, guid: f9c9852132e7958409938593709abf93, type: 3}
+  PropPrefabRef:
+    m_AssetGUID: f9c9852132e7958409938593709abf93
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 1
   MaxHP: 100
   Center: {x: 0, y: 0.25, z: 0}
   Radius: 0.08

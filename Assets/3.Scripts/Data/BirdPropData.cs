@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Bird.Network.Data
 {
@@ -7,7 +8,9 @@ namespace Bird.Network.Data
     {
         public int PropID; // 고유 사물 번호
         public string PropName; // 사물 이름 (UI 표시용)
-        public GameObject PropPrefab; // 실제 사물 모델링 
+        
+        // public GameObject PropPrefab;
+        public AssetReferenceGameObject PropPrefabRef; // 실제 사물 모델링 
 
         public int MaxHP; // 사물에 따라 적용될 체력
         public Vector3 Center; // CharacterController의 중심점 보정값

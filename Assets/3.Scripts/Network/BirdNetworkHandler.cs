@@ -5,6 +5,7 @@ using Bird.Network.UI;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
@@ -18,13 +19,17 @@ namespace Bird.Network.Handlers
         [SerializeField] private NetworkRunner runnerPrefab;
         [SerializeField] private NetworkObject playerPrefab;
         [SerializeField] private NetworkObject gameManagerPrefab;
-        [SerializeField] private string gameSceneName = "GameScene"; // 유니티 빌드 설정에 등록된 게임 씬 인덱스나 이름
-        private NetworkRunner currentRunner;
+        [SerializeField] private string gameSceneName = "GameScene";
         
+        private NetworkRunner currentRunner;
         private Dictionary<PlayerRef, NetworkObject> spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
 
         public async void StartGame(GameMode mode)
         {
+            Debug.Log($"[Bird] 맵 데이터 다운로드 및 씬 로드 중... ({gameSceneName})");
+            await Addressables.LoadSceneAsync(gameSceneName).Task;
+            Debug.Log("[Bird] 씬 로드 완료! 네트워크 접속을 시작합니다.");
+            
             if (currentRunner == null)
             {
                 currentRunner = Instantiate(runnerPrefab);
@@ -33,19 +38,29 @@ namespace Bird.Network.Handlers
 
             // 네트워크 인터페이스 활성화
             currentRunner.ProvideInput = true;
-
+            
             // 세션 시작 (방 이름 "BirdRoom"으로 고정 테스트)
             var result = await currentRunner.StartGame(new StartGameArgs()
             {
                 GameMode = mode,
                 SessionName = "BirdRoom",
-                Scene = SceneRef.FromIndex(1), // Build Settings의 1번 씬이 GameScene일 때
-                SceneManager = currentRunner.GetComponent<NetworkSceneManagerDefault>() // NetworkSceneManagerDefault는 씬 전환 시 동기화르 도와주는 친구입니다.
+                SceneManager = currentRunner.GetComponent<NetworkSceneManagerDefault>()
+                // Scene = SceneRef.FromIndex(1), // Build Settings의 1번 씬이 GameScene일 때
+                // SceneManager = currentRunner.GetComponent<NetworkSceneManagerDefault>() // NetworkSceneManagerDefault는 씬 전환 시 동기화르 도와주는 친구입니다.
             });
 
             if (result.Ok)
             {
                 Debug.Log($"[Bird] {mode} 성공. 게임 씬으로 이동합니다.");
+                
+                if (currentRunner.IsServer)
+                {
+                    currentRunner.Spawn(gameManagerPrefab, Vector3.zero, Quaternion.identity);
+                }
+            }
+            else
+            {
+                Debug.LogError($"[Bird] 접속 실패: {result.ShutdownReason}");
             }
         }
 
@@ -127,11 +142,10 @@ namespace Bird.Network.Handlers
 
         public void OnSceneLoadDone(NetworkRunner runner)
         {
-            // 호스트만 게임 매니저를 생성하겠습니다.
-            if (runner.IsServer)
+            /*if (runner.IsServer)
             {
                 runner.Spawn(gameManagerPrefab, Vector3.zero, Quaternion.identity);
-            }
+            }*/
         }
         
         public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }

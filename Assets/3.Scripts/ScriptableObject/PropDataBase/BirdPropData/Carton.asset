@@ -14,8 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PropID: 5
   PropName: carton
-  PropPrefab: {fileID: 4400280118108865249, guid: 223aacf709fe6d0488b72c3f5f823ea4, type: 3}
+  PropPrefabRef:
+    m_AssetGUID: 223aacf709fe6d0488b72c3f5f823ea4
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
   MaxHP: 200
-  Center: {x: 0, y: 0.125, z: 0}
+  Center: {x: 0, y: 0.25, z: 0}
   Radius: 0.1
-  Height: 0.25
+  Height: 0.5

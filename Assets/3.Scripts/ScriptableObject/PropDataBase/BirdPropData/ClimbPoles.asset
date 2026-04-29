@@ -14,7 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PropID: 6
   PropName: ClimbPoles
-  PropPrefab: {fileID: 1909597376304860936, guid: 24c6a3f47a5a6ed42ba160730c0e6286, type: 3}
+  PropPrefabRef:
+    m_AssetGUID: 24c6a3f47a5a6ed42ba160730c0e6286
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 1
   MaxHP: 200
   Center: {x: 0, y: 0.75, z: 0}
   Radius: 0.3

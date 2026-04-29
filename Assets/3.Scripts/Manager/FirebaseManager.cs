@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace Bird.Network.Managers
 {
+    /// <summary>
+    /// 의존성 체크 및 익명 로그인을 수행하며 유저 UID를 확보합니다
+    /// </summary>
     public class FirebaseManager : MonoBehaviour
     {
         public static FirebaseManager Instance { get; private set; }

@@ -21,13 +21,16 @@ namespace Bird.Network.UI
 
         private void Start()
         {
-            _runner = FindObjectOfType<NetworkRunner>();
-            
             startButton.onClick.AddListener(OnStartButtonClicked);
         }
 
         private void Update()
         {
+            if (_runner == null)
+            {
+                _runner = FindObjectOfType<NetworkRunner>();
+            }
+            
             if (_runner == null || !_runner.IsRunning) return;
             
             _isLobby = BirdGameManager.Instance != null && BirdGameManager.Instance.CurrentPhase == GamePhase.Lobby;

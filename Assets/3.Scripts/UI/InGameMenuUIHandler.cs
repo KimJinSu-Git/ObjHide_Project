@@ -1,8 +1,6 @@
-using System;
 using Fusion;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
+using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 
 namespace Bird.Network.UI
@@ -54,7 +52,7 @@ namespace Bird.Network.UI
             }
             else
             {
-                SceneManager.LoadScene(0);
+                await Addressables.LoadSceneAsync("LobbyScene").Task;
             }
         }
     }

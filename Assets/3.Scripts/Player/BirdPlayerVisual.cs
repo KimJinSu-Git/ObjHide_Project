@@ -2,6 +2,8 @@ using Bird.Network.Data;
 using Bird.Network.Managers;
 using Fusion;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Bird.Network.Player
 {
@@ -18,6 +20,8 @@ namespace Bird.Network.Player
         private int lastAppliedPropID = -2;
         private BirdPlayerHealth _health;
         private CharacterController _controller;
+        
+        private AsyncOperationHandle<GameObject> _currentPropHandle;
 
         public override void Spawned()
         {
@@ -28,10 +32,15 @@ namespace Bird.Network.Player
 
         private void OnPropIDChanged() => UpdateAppearance();
 
-        public void UpdateAppearance()
+        public async void UpdateAppearance()
         {
             if (propDatabase == null || meshContainer == null) return;
             if (lastAppliedPropID == CurrentPropID) return;
+            
+            if (_currentPropHandle.IsValid())
+            {
+                Addressables.ReleaseInstance(_currentPropHandle);
+            }
 
             foreach (Transform child in meshContainer) Destroy(child.gameObject);
 
@@ -49,21 +58,35 @@ namespace Bird.Network.Player
                     if (HasStateAuthority && _health != null) _health.CurrentHP = data.MaxHP;
                     if (defaultVisual != null) defaultVisual.SetActive(false);
                     
-                    var prop = Instantiate(data.PropPrefab, meshContainer);
-                    int layer = LayerMask.NameToLayer("PropPlayer");
-                    SetLayerRecursive(prop, layer);
-
-                    if (_controller != null)
+                    _currentPropHandle = data.PropPrefabRef.InstantiateAsync(meshContainer);
+                    
+                    GameObject prop = await _currentPropHandle.Task;
+                    
+                    if (prop != null)
                     {
-                        _controller.enabled = false;
-                        _controller.height = data.Height;
-                        _controller.radius = data.Radius;
-                        _controller.center = data.Center;
-                        _controller.enabled = true;
+                        int layer = LayerMask.NameToLayer("PropPlayer");
+                        SetLayerRecursive(prop, layer);
+
+                        if (_controller != null)
+                        {
+                            _controller.enabled = false;
+                            _controller.height = data.Height;
+                            _controller.radius = data.Radius;
+                            _controller.center = data.Center;
+                            _controller.enabled = true;
+                        }
                     }
                 }
             }
             lastAppliedPropID = CurrentPropID;
+        }
+        
+        public override void Despawned(NetworkRunner runner, bool hasState)
+        {
+            if (_currentPropHandle.IsValid())
+            {
+                Addressables.ReleaseInstance(_currentPropHandle);
+            }
         }
 
         private void SetLayerRecursive(GameObject obj, int layer)
