@@ -6,6 +6,7 @@ using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
@@ -23,30 +24,43 @@ namespace Bird.Network.Handlers
         
         private NetworkRunner currentRunner;
         private Dictionary<PlayerRef, NetworkObject> spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
+        private EventSystem _eventSystem;
+        
+        private bool _isConnecting = false;
 
         public async void StartGame(GameMode mode)
         {
+            if (_isConnecting) return;
+            _isConnecting = true;
+            
             Debug.Log($"[Bird] 맵 데이터 다운로드 및 씬 로드 중... ({gameSceneName})");
             await Addressables.LoadSceneAsync(gameSceneName).Task;
             Debug.Log("[Bird] 씬 로드 완료! 네트워크 접속을 시작합니다.");
             
-            if (currentRunner == null)
+            _eventSystem = EventSystem.current;
+            _eventSystem.enabled = false;
+            
+            if (currentRunner != null)
             {
-                currentRunner = Instantiate(runnerPrefab);
-                DontDestroyOnLoad(currentRunner.gameObject);
+                Destroy(currentRunner.gameObject);
+                currentRunner = null;
             }
-
+            
+            currentRunner = Instantiate(runnerPrefab);
+            DontDestroyOnLoad(currentRunner.gameObject);
+            
             // 네트워크 인터페이스 활성화
             currentRunner.ProvideInput = true;
+            
+            var sceneManager = currentRunner.GetComponent<NetworkSceneManagerDefault>();
+            if (sceneManager == null) sceneManager = currentRunner.gameObject.AddComponent<NetworkSceneManagerDefault>();
             
             // 세션 시작 (방 이름 "BirdRoom"으로 고정 테스트)
             var result = await currentRunner.StartGame(new StartGameArgs()
             {
                 GameMode = mode,
                 SessionName = "BirdRoom",
-                SceneManager = currentRunner.GetComponent<NetworkSceneManagerDefault>()
-                // Scene = SceneRef.FromIndex(1), // Build Settings의 1번 씬이 GameScene일 때
-                // SceneManager = currentRunner.GetComponent<NetworkSceneManagerDefault>() // NetworkSceneManagerDefault는 씬 전환 시 동기화르 도와주는 친구입니다.
+                SceneManager = sceneManager
             });
 
             if (result.Ok)
@@ -57,10 +71,15 @@ namespace Bird.Network.Handlers
                 {
                     currentRunner.Spawn(gameManagerPrefab, Vector3.zero, Quaternion.identity);
                 }
+                
+                if (_eventSystem != null) _eventSystem.enabled = true;
             }
             else
             {
                 Debug.LogError($"[Bird] 접속 실패: {result.ShutdownReason}");
+                _isConnecting = false;
+                
+                if (_eventSystem != null) _eventSystem.enabled = true;
             }
         }
 
@@ -111,6 +130,18 @@ namespace Bird.Network.Handlers
 
         public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
         {
+            Debug.Log($"[Bird] 네트워크 세션이 종료되었습니다. 사유: {shutdownReason}");
+
+            _isConnecting = false;
+            
+            if (currentRunner != null)
+            {
+                Destroy(currentRunner.gameObject, 0.1f);
+                currentRunner = null; 
+            }
+
+            spawnedCharacters.Clear();
+
             SceneManager.LoadScene(0);
         }
 

@@ -24,9 +24,12 @@ namespace Bird.Network.UI
             quitButton.onClick.AddListener(LeaveGame);
         }
 
-        private void Start()
+        private void Update()
         {
-            _runner = FindObjectOfType<NetworkRunner>();
+            if (_runner == null) 
+            {
+                _runner = FindObjectOfType<NetworkRunner>();
+            }
         }
 
         public void OpenMenu()
@@ -42,17 +45,13 @@ namespace Bird.Network.UI
         /// <summary>
         /// 게임 나가기 버튼 클릭 시 호출
         /// </summary>
-        private async void LeaveGame()
+        private void LeaveGame()
         {
             quitButton.interactable = false; // 중복 클릭 방지
 
             if (_runner != null && _runner.IsRunning)
             {
-                await _runner.Shutdown();
-            }
-            else
-            {
-                await Addressables.LoadSceneAsync("LobbyScene").Task;
+                _runner.Shutdown();
             }
         }
     }

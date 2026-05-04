@@ -11,6 +11,8 @@ namespace Bird.Network.Managers
         [SerializeField] private LoadingScreenController loadingUI;
         public static string LocalNickname { get; private set; }
         
+        private bool _isHandlingLogin = false;
+        
         private void OnEnable()
         {
             FirebaseManager.OnLoginSuccess += HandleLoginSuccess;
@@ -20,9 +22,23 @@ namespace Bird.Network.Managers
         {
             FirebaseManager.OnLoginSuccess -= HandleLoginSuccess;
         }
+        
+        private void Start()
+        {
+            var auth = FirebaseAuth.DefaultInstance;
+    
+            if (auth != null && auth.CurrentUser != null)
+            {
+                Debug.Log("[AuthFlow] 이미 로그인된 유저입니다. 즉시 리소스 체크를 시작합니다.");
+                HandleLoginSuccess(auth.CurrentUser);
+            }
+        }
 
         private async void HandleLoginSuccess(FirebaseUser user)
         {
+            if (_isHandlingLogin) return;
+            _isHandlingLogin = true;
+            
             await Task.Delay(100);
             
             Debug.Log("[AuthFlow] 로그인 완료.");
@@ -57,25 +73,35 @@ namespace Bird.Network.Managers
 
         private async Task TransitionToLobby(string nickname)
         {
-            Debug.Log($"[AuthFlow] 로비 진입 준비 완료! 확정된 닉네임: {nickname}");
-            
-            if (loadingUI != null)
+            try
             {
-                loadingUI.Show("Game Resources Check....");
+                Debug.Log($"[AuthFlow] 로비 진입 준비 완료! 확정된 닉네임: {nickname}");
+        
+                if (loadingUI != null)
+                {
+                    loadingUI.Show("Game Resources Check....");
 
-                // Preload 라벨이 붙은 모든 에셋 다운로드 시도
-                await AddressableResourceManager.Instance.PreloadByLabel("Preload", (progress, downloaded, total) => {
-                    loadingUI.SetProgress(progress, downloaded, total);
-                });
+                    await AddressableResourceManager.Instance.PreloadByLabel("Preload", (progress, downloaded, total) => {
+                        loadingUI.SetProgress(progress, downloaded, total);
+                    });
 
-                loadingUI.SetProgress(1.0f, 0, 0);
-                await Task.Delay(500);
-                loadingUI.Hide();
+                    loadingUI.SetProgress(1.0f, 0, 0);
+                    await Task.Delay(500);
+                    loadingUI.Hide();
+                }
+        
+                Debug.Log("[AuthFlow] 모든 리소스 준비 완료! 로비 씬으로 진입합니다.");
+        
+                await Addressables.LoadSceneAsync("LobbyScene").Task; 
             }
-            
-            Debug.Log("[AuthFlow] 모든 리소스 준비 완료! 로비 씬으로 진입합니다.");
-            
-            await Addressables.LoadSceneAsync("LobbyScene").Task;
+            catch (System.Exception e)
+            {
+                if (loadingUI != null)
+                {
+                    loadingUI.Show($"Error: {e.Message}");
+                }
+                Debug.LogError($"[AuthFlow] 로비 씬 진입 실패: {e.Message}\n{e.StackTrace}");
+            }
         }
     }
 }

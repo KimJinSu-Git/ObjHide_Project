@@ -88,8 +88,6 @@ namespace Bird.Network.UI
             {
                 runner.Shutdown();
             }
-            
-            SceneManager.LoadScene(0);
         }
 
         public void CloseUI()
