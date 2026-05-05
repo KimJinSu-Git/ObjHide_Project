@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 1c206f0449ce3e1438d60572b257f8ae
   m_currentHash:
     serializedVersion: 2
-    Hash: faccbcc159e0e59693587075270b9d3c
+    Hash: de0a42ff0ece340eb87f77f34a44ad01
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -73,7 +73,7 @@ MonoBehaviour:
       - m_Id: 38ea14d05b2f8744687eda25f736f959
         m_Value: '[UnityEngine.AddressableAssets.Addressables.BuildPath]/[BuildTarget]'
       - m_Id: 74196df7da7d43e4e95d77c53f0dcafb
-        m_Value: https://birdprophunt.web.app/StandaloneWindows64
+        m_Value: 'https://birdprophunt.web.app/[BuildTarget]'
       - m_Id: bc2cf4239cd76734d8a9ae9c2baa20fa
         m_Value: '[UnityEditor.EditorUserBuildSettings.activeBuildTarget]'
       - m_Id: c4623d6a9d1770b48a852021e372f719
