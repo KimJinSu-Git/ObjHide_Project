@@ -8,5 +8,11 @@ namespace Bird.Network.UI
     public static class BirdInputManager
     {
         public static Vector3 Movement { get; set; }
+        public static bool IsJumpPressed { get; set; } // 점프 상태
+
+        public static void setJumpPressed()
+        {
+            IsJumpPressed = true;
+        }
     }
 }

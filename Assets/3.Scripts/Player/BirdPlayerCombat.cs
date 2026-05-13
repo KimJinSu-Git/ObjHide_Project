@@ -32,7 +32,16 @@ namespace Bird.Network.Player
             
             // 카메라 정보를 컨트롤러나 카메라 핸들러로부터 가져옴
             Camera mainCam = Camera.main;
+            
+            RPC_PlayShootAnimation();
+            
             RPC_FireHitscan(mainCam.transform.position, mainCam.transform.forward);
+        }
+        
+        [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+        private void RPC_PlayShootAnimation()
+        {
+            _controller.Visual.TriggerShootAnimation();
         }
 
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]

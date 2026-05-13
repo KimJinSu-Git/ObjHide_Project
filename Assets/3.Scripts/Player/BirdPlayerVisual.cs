@@ -9,10 +9,17 @@ namespace Bird.Network.Player
 {
     public class BirdPlayerVisual : NetworkBehaviour
     {
+        private static readonly int Horizontal = Animator.StringToHash("Horizontal");
+        private static readonly int Vertical = Animator.StringToHash("Vertical");
+        private static readonly int IsGrounded = Animator.StringToHash("isGrounded");
+        private static readonly int Jump = Animator.StringToHash("Jump");
+        private static readonly int Shoot = Animator.StringToHash("Shoot");
+
         [Header("Prop Settings")]
         [SerializeField] private PropDatabase propDatabase;
         [SerializeField] private Transform meshContainer;
         [SerializeField] private GameObject defaultVisual;
+        [SerializeField] private Vector3 defaultCenter = new Vector3(0, 0.85f, 0);
 
         [Networked, OnChangedRender(nameof(OnPropIDChanged))] 
         public int CurrentPropID { get; set; } = -1;
@@ -22,11 +29,16 @@ namespace Bird.Network.Player
         private CharacterController _controller;
         
         private AsyncOperationHandle<GameObject> _currentPropHandle;
+        
+        public Animator PlayerAnimator { get;  private set; }
 
         public override void Spawned()
         {
             _health = GetComponent<BirdPlayerHealth>();
             _controller = GetComponent<CharacterController>();
+            
+            if(defaultVisual != null) PlayerAnimator = defaultVisual.GetComponent<Animator>();
+            
             UpdateAppearance();
         }
 
@@ -95,10 +107,10 @@ namespace Bird.Network.Player
             foreach (Transform child in obj.transform) SetLayerRecursive(child.gameObject, layer);
         }
 
-        public void ResetCollider()
+        private void ResetCollider()
         {
             if (_controller == null) return;
-            _controller.center = Vector3.zero;
+            _controller.center = defaultCenter;
             _controller.height = 1.5f;
             _controller.radius = 0.3f;
         }
@@ -108,6 +120,27 @@ namespace Bird.Network.Player
             if (HasStateAuthority) CurrentPropID = -1;
             if (meshContainer != null) meshContainer.gameObject.SetActive(false);
             if (defaultVisual != null) defaultVisual.SetActive(false);
+        }
+
+        public void UpdateAnimatorParams(float horizontal, float vertical, bool isGrounded)
+        {
+            if (CurrentPropID != -1 || PlayerAnimator == null) return;
+
+            PlayerAnimator.SetFloat(Horizontal, horizontal);
+            PlayerAnimator.SetFloat(Vertical, vertical);
+            PlayerAnimator.SetBool(IsGrounded, isGrounded);
+        }
+        
+        public void TriggerJumpAnimation()
+        {
+            if (CurrentPropID != -1 || PlayerAnimator == null) return;
+            PlayerAnimator.SetTrigger(Jump);
+        }
+
+        public void TriggerShootAnimation()
+        {
+            if (CurrentPropID != -1 || PlayerAnimator == null) return;
+            PlayerAnimator.SetTrigger(Shoot);
         }
 
         /// <summary>

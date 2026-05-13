@@ -19,6 +19,10 @@ namespace Bird.Network.Player
         
         [Header("Movement Settings")]
         [SerializeField] private float moveSpeed = 5f;
+        [SerializeField] private float jumpForce = 1.5f;
+        
+        private float _velocityY;
+        private float _gravity = -9.81f;
 
         public BirdPlayerHealth Health { get; private set; }
         public BirdPlayerVisual Visual { get; private set; }
@@ -61,14 +65,36 @@ namespace Bird.Network.Player
             {
                 if (Health.CurrentHP <= 0 || CameraHandler.IsLocked) return;
                 
+                bool isGrounded = controller.isGrounded;
+                
+                if (isGrounded && _velocityY < 0)
+                {
+                    _velocityY = -2f;
+                }
+                
+                // 점프 버튼이 눌렸는지 확인
+                if (data.Buttons.IsSet(PlayerInputButtons.Jump) && isGrounded)
+                {
+                    _velocityY = Mathf.Sqrt(jumpForce * -2f * _gravity);
+                    Visual.TriggerJumpAnimation();
+                }
+                
+                _velocityY += _gravity * Runner.DeltaTime;
+                
                 Quaternion lookRotation = Quaternion.Euler(0, data.LookYaw, 0);
                 Vector3 moveDirection = lookRotation * data.Movement;
-                Vector3 moveVector = moveDirection * moveSpeed * Runner.DeltaTime;
-        
-                if (!controller.isGrounded) moveVector.y -= 9.81f * Runner.DeltaTime;
-
-                if (controller != null && controller.enabled) controller.Move(moveVector);
-                if (moveDirection.magnitude > 0.1f) transform.forward = moveDirection;
+                Vector3 moveVector = moveDirection * moveSpeed;
+                
+                moveVector.y = _velocityY;
+                
+                if (controller != null && controller.enabled) 
+                {
+                    controller.Move(moveVector * Runner.DeltaTime);
+                }
+                
+                transform.rotation = lookRotation;
+                
+                Visual.UpdateAnimatorParams(data.Movement.x, data.Movement.z, isGrounded);
             }
             
             UpdatePlayerBehaviourByPhase();
