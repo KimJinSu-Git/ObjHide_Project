@@ -72,6 +72,11 @@ namespace Bird.Network.Player
                         SetStrategy(nextMode);
                         
                         if (gunModel != null) gunModel.SetActive(isSeeker);
+                        
+                        if (GameplayHUD.Instance != null)
+                        {
+                            GameplayHUD.Instance.SetCrosshairVisible(isSeeker);
+                        }
                     }
                 }
             }

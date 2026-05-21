@@ -83,6 +83,14 @@ namespace Bird.Network.Handlers
             }
         }
 
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                BirdInputManager.IsJumpPressed = true;
+            }
+        }
+
         /// <summary>
         /// 플레이어가 서버에 접속했을 때 호출됩니다.
         /// Instantiate와 runner.Spawn의 차이
@@ -162,6 +170,12 @@ namespace Bird.Network.Handlers
             else
             {
                 data.Movement = keyboardInput.normalized;
+            }
+            
+            if (BirdInputManager.IsJumpPressed)
+            {
+                data.Buttons.Set(PlayerInputButtons.Jump, true);
+                BirdInputManager.IsJumpPressed = false;
             }
             
             // 카메라의 수평 회전(Yaw) 값을 서버로 전달

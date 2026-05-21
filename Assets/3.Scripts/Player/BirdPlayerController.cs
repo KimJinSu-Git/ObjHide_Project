@@ -21,9 +21,17 @@ namespace Bird.Network.Player
         [SerializeField] private float moveSpeed = 5f;
         [SerializeField] private float jumpForce = 1.5f;
         
-        private float _velocityY;
         private float _gravity = -9.81f;
+        
+        [Networked] private float _velocityY { get; set; }
+        
+        [Networked] private float NetHorizontal { get; set; }
+        [Networked] private float NetVertical { get; set; }
+        [Networked] private NetworkBool NetIsGrounded { get; set; }
+        [Networked] private int JumpCount { get; set; }
 
+        private int _lastJumpCount = 0;
+        
         public BirdPlayerHealth Health { get; private set; }
         public BirdPlayerVisual Visual { get; private set; }
         public BirdPlayerCombat Combat { get; private set; }
@@ -76,7 +84,7 @@ namespace Bird.Network.Player
                 if (data.Buttons.IsSet(PlayerInputButtons.Jump) && isGrounded)
                 {
                     _velocityY = Mathf.Sqrt(jumpForce * -2f * _gravity);
-                    Visual.TriggerJumpAnimation();
+                    JumpCount++;
                 }
                 
                 _velocityY += _gravity * Runner.DeltaTime;
@@ -94,10 +102,23 @@ namespace Bird.Network.Player
                 
                 transform.rotation = lookRotation;
                 
-                Visual.UpdateAnimatorParams(data.Movement.x, data.Movement.z, isGrounded);
+                NetHorizontal = data.Movement.x;
+                NetVertical = data.Movement.z;
+                NetIsGrounded = isGrounded;
             }
             
             UpdatePlayerBehaviourByPhase();
+        }
+
+        public override void Render()
+        {
+            Visual.UpdateAnimatorParams(NetHorizontal, NetVertical, NetIsGrounded);
+            
+            if (_lastJumpCount != JumpCount)
+            {
+                Visual.TriggerJumpAnimation();
+                _lastJumpCount = JumpCount;
+            }
         }
 
         private void UpdatePlayerBehaviourByPhase()
