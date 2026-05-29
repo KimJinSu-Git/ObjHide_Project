@@ -9,6 +9,8 @@ namespace Bird.Network.Player
     {
         [Networked] public TickTimer fireCooldown { get; set; }
         
+        [SerializeField] private BirdGunFX _gunFX;
+        
         private BirdPlayerHealth _health;
         private BirdPlayerController _controller;
 
@@ -42,6 +44,11 @@ namespace Bird.Network.Player
         private void RPC_PlayShootAnimation()
         {
             _controller.Visual.TriggerShootAnimation();
+            
+            if (_gunFX != null)
+            {
+                _gunFX.PlayFireEffects();
+            }
         }
 
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
