@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &4360997939083585776
+--- !u!1 &1393181175527919395
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,47 +8,48 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1111581387850205961}
-  - component: {fileID: 1596951525119993582}
-  - component: {fileID: 2075032379001866599}
-  - component: {fileID: 4445934039696182522}
+  - component: {fileID: 1618944173285434078}
+  - component: {fileID: 6350223336781555978}
+  - component: {fileID: 8266182888449685008}
+  - component: {fileID: 2791101962429209430}
+  - component: {fileID: 2526410137658489573}
   m_Layer: 0
-  m_Name: carton
+  m_Name: Computer chair
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
---- !u!4 &1111581387850205961
+--- !u!4 &1618944173285434078
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4360997939083585776}
+  m_GameObject: {fileID: 1393181175527919395}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071067}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 100, y: 99.99997, z: 99.99997}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 6997257365286733563}
+  m_Father: {fileID: 588195005129705003}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &1596951525119993582
+--- !u!33 &6350223336781555978
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4360997939083585776}
-  m_Mesh: {fileID: 4300000, guid: 7c9ede95921539344a5ba620271ca562, type: 3}
---- !u!23 &2075032379001866599
+  m_GameObject: {fileID: 1393181175527919395}
+  m_Mesh: {fileID: 4300148, guid: 18cd780e6948a554a850b2d047ebf8fb, type: 3}
+--- !u!23 &8266182888449685008
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4360997939083585776}
+  m_GameObject: {fileID: 1393181175527919395}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -65,7 +66,7 @@ MeshRenderer:
   m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: ebb6120b736e62840bb1deccf023bfc1, type: 2}
+  - {fileID: 2100000, guid: c91bef0412ad22a4793733160456d011, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -87,13 +88,13 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &4445934039696182522
+--- !u!65 &2791101962429209430
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4360997939083585776}
+  m_GameObject: {fileID: 1393181175527919395}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -106,9 +107,30 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.0038264995, y: 0.0030368478, z: 0.002514237}
-  m_Center: {x: 0, y: 0, z: 0.0012223108}
---- !u!1 &4400280118108865249
+  m_Size: {x: 0.0009262007, y: 0.0054615135, z: 0.007946297}
+  m_Center: {x: -0.003280538, y: -0.00026229388, z: 0.009341598}
+--- !u!65 &2526410137658489573
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1393181175527919395}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.0062386044, y: 0.0068700914, z: 0.0057402183}
+  m_Center: {x: 0.000041955114, y: -0.00019542284, z: 0.0030941626}
+--- !u!1 &1546053451107836012
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -116,27 +138,27 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6997257365286733563}
+  - component: {fileID: 588195005129705003}
   m_Layer: 0
-  m_Name: carton
+  m_Name: Computer chair
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 4294967295
   m_IsActive: 1
---- !u!4 &6997257365286733563
+--- !u!4 &588195005129705003
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4400280118108865249}
+  m_GameObject: {fileID: 1546053451107836012}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.1, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1111581387850205961}
+  - {fileID: 1618944173285434078}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

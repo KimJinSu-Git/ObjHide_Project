@@ -20,7 +20,7 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 1
-  MaxHP: 100
+  MaxHP: 50
   Center: {x: 0, y: 0.25, z: 0}
   Radius: 0.08
   Height: 0.5

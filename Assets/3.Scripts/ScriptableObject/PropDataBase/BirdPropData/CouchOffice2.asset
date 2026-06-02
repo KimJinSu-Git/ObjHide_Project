@@ -10,12 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: de4157fc4af153c468105eaf46284e65, type: 3}
-  m_Name: HideObject3
+  m_Name: CouchOffice2
   m_EditorClassIdentifier: 
   PropID: 3
-  PropName: Sphere
-  PropPrefab: {fileID: 8664488908691446235, guid: ff155960f07e4a94bb1a76f1b41e6faa, type: 3}
-  MaxHP: 50
-  Center: {x: 0, y: 0, z: 0}
+  PropName: CouchOffice2
+  PropPrefabRef:
+    m_AssetGUID: 0dc708782a067064c91ca4f0b7ffc988
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  MaxHP: 200
+  Center: {x: 0, y: 0.35, z: 0}
   Radius: 0.3
   Height: 1

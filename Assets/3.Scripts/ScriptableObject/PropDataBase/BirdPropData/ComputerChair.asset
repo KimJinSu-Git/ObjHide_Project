@@ -10,12 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: de4157fc4af153c468105eaf46284e65, type: 3}
-  m_Name: HideObject1
+  m_Name: ComputerChair
   m_EditorClassIdentifier: 
   PropID: 1
-  PropName: Cube
-  PropPrefab: {fileID: 570363873411136201, guid: 0b7d212159f2f47468069b8f7b535c8d, type: 3}
+  PropName: ComputerChair
+  PropPrefabRef:
+    m_AssetGUID: a6653e52fa24d0d49ab4192b9cc79dfb
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
   MaxHP: 100
-  Center: {x: 0, y: 0, z: 0}
-  Radius: 0.3
-  Height: 1
+  Center: {x: 0, y: 0.65, z: 0}
+  Radius: 0.38
+  Height: 1.3
