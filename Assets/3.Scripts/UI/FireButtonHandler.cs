@@ -9,7 +9,6 @@ namespace Bird.Network.UI
         public static FireButtonHandler Instance { get; private set; }
 
         [SerializeField] private Button fireButton;
-        [SerializeField] private Button soloTestFireButton;
 
         private void Awake()
         {
@@ -22,9 +21,6 @@ namespace Bird.Network.UI
             fireButton.gameObject.SetActive(true);
             fireButton.onClick.RemoveAllListeners();
             fireButton.onClick.AddListener(() => onClickAction?.Invoke());
-            soloTestFireButton.gameObject.SetActive(true);
-            soloTestFireButton.onClick.RemoveAllListeners();
-            soloTestFireButton.onClick.AddListener(() => onClickAction?.Invoke());
         }
 
         public void SetVisible(bool visible)

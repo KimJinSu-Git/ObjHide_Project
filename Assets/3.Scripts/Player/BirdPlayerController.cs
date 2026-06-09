@@ -29,7 +29,10 @@ namespace Bird.Network.Player
         [Networked] private float NetVertical { get; set; }
         [Networked] private NetworkBool NetIsGrounded { get; set; }
         [Networked] private int JumpCount { get; set; }
+        [Networked] private float PropYaw { get; set; }
+        [Networked] private NetworkButtons PrevButtons { get; set; }
 
+        private float _localPropYaw;
         private int _lastJumpCount = 0;
         
         public BirdPlayerHealth Health { get; private set; }
@@ -51,6 +54,11 @@ namespace Bird.Network.Player
             {
                 Instance = this;
                 OnLocalSpawned?.Invoke(Health.CurrentHP);
+                
+                if (PropAlignmentHandler.Instance != null)
+                {
+                    PropAlignmentHandler.Instance.SetUpButtons(ToggleLockAndSnap, Rotate45, Rotate90);
+                }
             }
         }
 
@@ -71,43 +79,59 @@ namespace Bird.Network.Player
         {
             if (GetInput(out BirdInputData data))
             {
-                if (Health.CurrentHP <= 0 || CameraHandler.IsLocked) return;
-                
-                bool isGrounded = controller.isGrounded;
-                
-                if (isGrounded && _velocityY < 0)
+                if (Health.CurrentHP > 0)
                 {
-                    _velocityY = -2f;
+                    bool isGrounded = controller.isGrounded;
+                    
+                    if (isGrounded && _velocityY < 0)
+                    {
+                        _velocityY = -2f;
+                    }
+                    
+                    bool isLockedNow = HasInputAuthority ? CameraHandler.LocalIsLocked : CameraHandler.IsLocked;
+                    bool jumpPressed = data.Buttons.WasPressed(PrevButtons, PlayerInputButtons.Jump);
+                    
+                    if (!isLockedNow && jumpPressed && isGrounded)
+                    {
+                        _velocityY = Mathf.Sqrt(jumpForce * -2f * _gravity);
+                        JumpCount++;
+                    }
+                    
+                    _velocityY += _gravity * Runner.DeltaTime;
+                    Vector3 moveVector = Vector3.zero;
+                    
+                    if (!isLockedNow)
+                    {
+                        Quaternion lookRotation = Quaternion.Euler(0, data.LookYaw, 0);
+                        Vector3 moveDirection = lookRotation * data.Movement;
+                        moveVector = moveDirection * moveSpeed;
+                
+                        transform.rotation = lookRotation;
+                
+                        NetHorizontal = data.Movement.x;
+                        NetVertical = data.Movement.z;
+                    }
+                    else
+                    {
+                        float targetYaw = HasInputAuthority ? _localPropYaw : PropYaw;
+                        transform.rotation = Quaternion.Euler(0, targetYaw, 0);
+                        
+                        NetHorizontal = 0;
+                        NetVertical = 0;
+                    }
+                    
+                    moveVector.y = _velocityY;
+                    
+                    if (controller != null && controller.enabled) 
+                    {
+                        controller.Move(moveVector * Runner.DeltaTime);
+                    }
+                    
+                    NetIsGrounded = isGrounded;
+                    
+                    PrevButtons = data.Buttons;
                 }
-                
-                // 점프 버튼이 눌렸는지 확인
-                if (data.Buttons.IsSet(PlayerInputButtons.Jump) && isGrounded)
-                {
-                    _velocityY = Mathf.Sqrt(jumpForce * -2f * _gravity);
-                    JumpCount++;
-                }
-                
-                _velocityY += _gravity * Runner.DeltaTime;
-                
-                Quaternion lookRotation = Quaternion.Euler(0, data.LookYaw, 0);
-                Vector3 moveDirection = lookRotation * data.Movement;
-                Vector3 moveVector = moveDirection * moveSpeed;
-                
-                moveVector.y = _velocityY;
-                
-                if (controller != null && controller.enabled) 
-                {
-                    controller.Move(moveVector * Runner.DeltaTime);
-                }
-                
-                transform.rotation = lookRotation;
-                
-                NetHorizontal = data.Movement.x;
-                NetVertical = data.Movement.z;
-                NetIsGrounded = isGrounded;
             }
-            
-            UpdatePlayerBehaviourByPhase();
         }
 
         public override void Render()
@@ -119,6 +143,48 @@ namespace Bird.Network.Player
                 Visual.TriggerJumpAnimation();
                 _lastJumpCount = JumpCount;
             }
+            
+            UpdatePlayerBehaviourByPhase();
+        }
+        
+        private void ToggleLockAndSnap()
+        {
+            if (!HasInputAuthority || Health.CurrentHP <= 0) return;
+
+            // 토글 후 잠금 상태가 될 것인지 미리 확인
+            bool willLock = !CameraHandler.LocalIsLocked;
+            
+            CameraHandler.ToggleLock();
+
+            if (willLock)
+            {
+                float currentYaw = transform.eulerAngles.y;
+                _localPropYaw = Mathf.Round(currentYaw / 90f) * 90f; // 90도 스냅 연산
+                RPC_SetPropYaw(_localPropYaw);
+            }
+
+            if (PropAlignmentHandler.Instance != null)
+            {
+                PropAlignmentHandler.Instance.SetSubButtonsVisible(willLock);
+            }
+        }
+        
+        private void Rotate45()
+        {
+            _localPropYaw += 45f;
+            RPC_SetPropYaw(_localPropYaw);
+        }
+
+        private void Rotate90()
+        {
+            _localPropYaw += 90f;
+            RPC_SetPropYaw(_localPropYaw);
+        }
+        
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        private void RPC_SetPropYaw(float yaw)
+        {
+            PropYaw = yaw;
         }
 
         private void UpdatePlayerBehaviourByPhase()
@@ -127,10 +193,20 @@ namespace Bird.Network.Player
             bool isSeeker = Runner.LocalPlayer == BirdGameManager.Instance.Seeker;
             var currentPhase = BirdGameManager.Instance.CurrentPhase;
 
-            if (HasInputAuthority && FireButtonHandler.Instance != null)
+            if (HasInputAuthority)
             {
-                bool isGameActive = currentPhase != GamePhase.Lobby && currentPhase != GamePhase.Ready && currentPhase != GamePhase.Result;
-                FireButtonHandler.Instance.SetVisible(isSeeker && isGameActive);
+                bool canShoot = isSeeker && (currentPhase != GamePhase.Lobby && currentPhase != GamePhase.Ready);
+                bool canAlign = !isSeeker && currentPhase != GamePhase.Lobby;
+                
+                if (FireButtonHandler.Instance != null)
+                {
+                    FireButtonHandler.Instance.SetVisible(canShoot);
+                }
+
+                if (PropAlignmentHandler.Instance != null)
+                {
+                    PropAlignmentHandler.Instance.SetVisible(canAlign);
+                }
             }
 
             if (currentPhase == GamePhase.Ready)

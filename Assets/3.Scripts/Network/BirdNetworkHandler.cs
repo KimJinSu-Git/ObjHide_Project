@@ -85,10 +85,12 @@ namespace Bird.Network.Handlers
 
         private void Update()
         {
+            /*
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 BirdInputManager.IsJumpPressed = true;
             }
+            */
         }
 
         /// <summary>
@@ -172,11 +174,8 @@ namespace Bird.Network.Handlers
                 data.Movement = keyboardInput.normalized;
             }
             
-            if (BirdInputManager.IsJumpPressed)
-            {
-                data.Buttons.Set(PlayerInputButtons.Jump, true);
-                BirdInputManager.IsJumpPressed = false;
-            }
+            bool isJump = BirdInputManager.IsJumpPressed || Input.GetKey(KeyCode.Space);
+            data.Buttons.Set(PlayerInputButtons.Jump, isJump);
             
             // 카메라의 수평 회전(Yaw) 값을 서버로 전달
             data.LookYaw = CameraRotationHandler.CurrentYaw;

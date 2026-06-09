@@ -23,6 +23,8 @@ namespace Bird.Network.Player
         // 전략 저장소
         private Dictionary<CameraMode, ICameraStrategy> _strategies;
         private ICameraStrategy _currentStrategy;
+        
+        public bool LocalIsLocked { get; private set; }
 
         [Networked] public NetworkBool IsLocked { get; set; } 
 
@@ -131,18 +133,13 @@ namespace Bird.Network.Player
         public void ToggleLock()
         {
             if (!HasInputAuthority || _controller.Health.CurrentHP <= 0) return;
-        
-            bool nextLockState = !IsLocked;
             
-            if (nextLockState)
-            {
-                SetStrategy(CameraMode.FreeLook);
-            }
-            else
-            {
-                SetStrategy(CameraMode.TPS);
-            }
-            RPC_SetLocked(nextLockState);
+            LocalIsLocked = !LocalIsLocked;
+        
+            if (LocalIsLocked) SetStrategy(CameraMode.FreeLook);
+            else SetStrategy(CameraMode.TPS);
+            
+            RPC_SetLocked(LocalIsLocked);
         }
         
         [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
