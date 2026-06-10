@@ -30,6 +30,7 @@ namespace Bird.Network.Player
         [Networked] private NetworkBool NetIsGrounded { get; set; }
         [Networked] private int JumpCount { get; set; }
         [Networked] private float PropYaw { get; set; }
+        [Networked] public float NetPitch { get; set; }
         [Networked] private NetworkButtons PrevButtons { get; set; }
 
         private float _localPropYaw;
@@ -110,6 +111,7 @@ namespace Bird.Network.Player
                 
                         NetHorizontal = data.Movement.x;
                         NetVertical = data.Movement.z;
+                        NetPitch = data.LookPitch;
                     }
                     else
                     {

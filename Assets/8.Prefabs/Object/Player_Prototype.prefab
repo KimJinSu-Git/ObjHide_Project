@@ -41576,6 +41576,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 5
   jumpForce: 1.5
+  _NetPitch: 0
 --- !u!114 &5687911589823440894
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41624,6 +41625,7 @@ MonoBehaviour:
   meshContainer: {fileID: 5655239302755460347}
   defaultVisual: {fileID: 1538454972154728822}
   defaultCenter: {x: 0, y: 0.85, z: 0}
+  headBone: {fileID: 4573515664430811376}
   _CurrentPropID: -1
 --- !u!114 &7073414980055306106
 MonoBehaviour:

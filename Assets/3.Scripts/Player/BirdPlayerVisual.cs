@@ -20,6 +20,9 @@ namespace Bird.Network.Player
         [SerializeField] private Transform meshContainer;
         [SerializeField] private GameObject defaultVisual;
         [SerializeField] private Vector3 defaultCenter = new Vector3(0, 0.85f, 0);
+        
+        [Header("IK Settings")]
+        [SerializeField] private Transform headBone;
 
         [Networked, OnChangedRender(nameof(OnPropIDChanged))] 
         public int CurrentPropID { get; set; } = -1;
@@ -40,6 +43,15 @@ namespace Bird.Network.Player
             if(defaultVisual != null) PlayerAnimator = defaultVisual.GetComponent<Animator>();
             
             UpdateAppearance();
+        }
+        
+        private void LateUpdate()
+        {
+            if (headBone == null) return;
+
+            float currentPitch = GetComponent<BirdPlayerController>().NetPitch;
+
+            headBone.localRotation = Quaternion.Euler(currentPitch-10f, 0, 0); 
         }
 
         private void OnPropIDChanged() => UpdateAppearance();

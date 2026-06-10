@@ -179,6 +179,7 @@ namespace Bird.Network.Handlers
             
             // 카메라의 수평 회전(Yaw) 값을 서버로 전달
             data.LookYaw = CameraRotationHandler.CurrentYaw;
+            data.LookPitch = CameraRotationHandler.CurrentPitch;
             
             // Fusion 엔진에 입력값 전달
             input.Set(data);
