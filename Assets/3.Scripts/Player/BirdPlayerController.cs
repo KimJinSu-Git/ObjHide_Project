@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Bird.Network.Player
 {
+    [RequireComponent(typeof(NetworkCharacterController))]
     [RequireComponent(typeof(BirdPlayerHealth))]
     [RequireComponent(typeof(BirdPlayerVisual))]
     [RequireComponent(typeof(BirdPlayerCombat))]
@@ -19,11 +20,7 @@ namespace Bird.Network.Player
         
         [Header("Movement Settings")]
         [SerializeField] private float moveSpeed = 5f;
-        [SerializeField] private float jumpForce = 1.5f;
-        
-        private float _gravity = -9.81f;
-        
-        [Networked] private float _velocityY { get; set; }
+        [SerializeField] private float jumpForce = 5f;
         
         [Networked] private float NetHorizontal { get; set; }
         [Networked] private float NetVertical { get; set; }
@@ -41,11 +38,11 @@ namespace Bird.Network.Player
         public BirdPlayerCombat Combat { get; private set; }
         public BirdPlayerCamera CameraHandler { get; private set; }
 
-        private CharacterController controller;
+        private NetworkCharacterController _ncc;
 
         public override void Spawned()
         {
-            controller = GetComponent<CharacterController>();
+            _ncc = GetComponent<NetworkCharacterController>();
             Health = GetComponent<BirdPlayerHealth>();
             Visual = GetComponent<BirdPlayerVisual>();
             Combat = GetComponent<BirdPlayerCombat>();
@@ -82,23 +79,9 @@ namespace Bird.Network.Player
             {
                 if (Health.CurrentHP > 0)
                 {
-                    bool isGrounded = controller.isGrounded;
-                    
-                    if (isGrounded && _velocityY < 0)
-                    {
-                        _velocityY = -2f;
-                    }
-                    
                     bool isLockedNow = HasInputAuthority ? CameraHandler.LocalIsLocked : CameraHandler.IsLocked;
                     bool jumpPressed = data.Buttons.WasPressed(PrevButtons, PlayerInputButtons.Jump);
                     
-                    if (!isLockedNow && jumpPressed && isGrounded)
-                    {
-                        _velocityY = Mathf.Sqrt(jumpForce * -2f * _gravity);
-                        JumpCount++;
-                    }
-                    
-                    _velocityY += _gravity * Runner.DeltaTime;
                     Vector3 moveVector = Vector3.zero;
                     
                     if (!isLockedNow)
@@ -122,15 +105,28 @@ namespace Bird.Network.Player
                         NetVertical = 0;
                     }
                     
-                    moveVector.y = _velocityY;
-                    
-                    if (controller != null && controller.enabled) 
+                    if (!isLockedNow && jumpPressed && _ncc.Grounded)
                     {
-                        controller.Move(moveVector * Runner.DeltaTime);
+                        _ncc.Jump();
+                        JumpCount++;
                     }
                     
-                    NetIsGrounded = isGrounded;
+                    if (_ncc != null) 
+                    {
+                        _ncc.Move(moveVector);
+                        
+                        if (!jumpPressed && _ncc.Grounded)
+                        {
+                            Vector3 currentVel = _ncc.Velocity;
+                            if (currentVel.y > 0)
+                            {
+                                currentVel.y = 0f; 
+                                _ncc.Velocity = currentVel;
+                            }
+                        }
+                    }
                     
+                    NetIsGrounded = _ncc.Grounded;
                     PrevButtons = data.Buttons;
                 }
             }
