@@ -94,9 +94,13 @@ namespace Bird.Network.Player
                         if (_controller != null)
                         {
                             _controller.enabled = false;
+                            
                             _controller.height = data.Height;
                             _controller.radius = data.Radius;
                             _controller.center = data.Center;
+                            
+                            _controller.skinWidth = Mathf.Clamp(data.Radius * 0.1f, 0.001f, 0.08f);
+                            
                             _controller.enabled = true;
                         }
                     }
@@ -122,9 +126,16 @@ namespace Bird.Network.Player
         private void ResetCollider()
         {
             if (_controller == null) return;
+            
+            _controller.enabled = false;
+            
             _controller.center = defaultCenter;
             _controller.height = 1.5f;
             _controller.radius = 0.3f;
+            
+            _controller.skinWidth = 0.08f;
+            
+            _controller.enabled = true;
         }
 
         public void HandleDeath()

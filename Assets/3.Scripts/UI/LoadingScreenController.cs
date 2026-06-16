@@ -31,7 +31,7 @@ namespace Bird.Network.UI
                 float downloadedMB = downloadedBytes / (1024f * 1024f);
                 float totalMB = totalBytes / (1024f * 1024f);
         
-                statusText.text = $"Resource Download... \n({downloadedMB:F1} / {totalMB:F1} MB)";
+                statusText.text = $"Resource Download... ({downloadedMB:F1} / {totalMB:F1} MB)";
             }
             else if (progress >= 1f)
             {
