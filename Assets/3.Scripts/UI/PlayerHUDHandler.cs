@@ -39,7 +39,7 @@ namespace Bird.Network.UI
         {
             if (hpText != null)
             {
-                hpText.text = $"HP : {currentHp}";
+                hpText.text = $"{currentHp}";
             }
         }
 
