@@ -23,6 +23,8 @@ namespace Bird.Network.Player
         
         [Header("IK Settings")]
         [SerializeField] private Transform headBone;
+        [SerializeField] private Transform[] spineBones;
+        [SerializeField] private float pitchOffset = 0f;
 
         [Networked, OnChangedRender(nameof(OnPropIDChanged))] 
         public int CurrentPropID { get; set; } = -1;
@@ -47,11 +49,25 @@ namespace Bird.Network.Player
         
         private void LateUpdate()
         {
-            if (headBone == null) return;
+            float currentPitch = GetComponent<BirdPlayerController>().NetPitch + pitchOffset;
 
-            float currentPitch = GetComponent<BirdPlayerController>().NetPitch;
+            if (spineBones != null && spineBones.Length > 0)
+            {
+                float dividedPitch = currentPitch / spineBones.Length;
 
-            headBone.localRotation = Quaternion.Euler(currentPitch-10f, 0, 0); 
+                foreach (Transform bone in spineBones)
+                {
+                    if (bone != null)
+                    {
+                        bone.localRotation = bone.localRotation * Quaternion.Euler(dividedPitch, 0, 0); 
+                    }
+                }
+            }
+
+            if (headBone != null)
+            {
+                // headBone.localRotation = headBone.localRotation * Quaternion.Euler(-10f, 0, 0); 
+            }
         }
 
         private void OnPropIDChanged() => UpdateAppearance();

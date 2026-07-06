@@ -9,27 +9,12 @@ namespace Bird.Network.Managers
     /// <summary>
     /// 의존성 체크 및 익명 로그인을 수행하며 유저 UID를 확보합니다
     /// </summary>
-    public class FirebaseManager : MonoBehaviour
+    public class FirebaseManager : Singleton<FirebaseManager>
     {
-        public static FirebaseManager Instance { get; private set; }
-
         private FirebaseAuth _auth;
         private FirebaseUser _user;
 
         public static event Action<FirebaseUser> OnLoginSuccess;
-
-        private void Awake()
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-                DontDestroyOnLoad(this);
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
-        }
 
         private async void Start()
         {

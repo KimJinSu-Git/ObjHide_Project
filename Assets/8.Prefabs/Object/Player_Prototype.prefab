@@ -41626,6 +41626,11 @@ MonoBehaviour:
   defaultVisual: {fileID: 1538454972154728822}
   defaultCenter: {x: 0, y: 0.85, z: 0}
   headBone: {fileID: 4573515664430811376}
+  spineBones:
+  - {fileID: 5301722923628651820}
+  - {fileID: 845583373815533255}
+  - {fileID: 3722392578594496144}
+  pitchOffset: 0
   _CurrentPropID: -1
 --- !u!114 &7073414980055306106
 MonoBehaviour:

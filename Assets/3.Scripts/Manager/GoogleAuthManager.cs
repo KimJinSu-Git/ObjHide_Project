@@ -5,24 +5,18 @@ using UnityEngine;
 
 namespace Bird.Network.Managers
 {
-    public class GoogleAuthManager : MonoBehaviour
+    public class GoogleAuthManager : Singleton<GoogleAuthManager>
     {
-        public static GoogleAuthManager Instance { get; private set; }
-
         [Header("Google Settings")] 
         [SerializeField] private string webClientId = "";
 
-        private void Awake()
+        protected override void Awake()
         {
-            if (Instance == null)
+            base.Awake();
+
+            if (Instance == this)
             {
-                Instance = this;
-                DontDestroyOnLoad(this);
                 InitializeGoogleSignIn();
-            }
-            else
-            {
-                Destroy(gameObject);
             }
         }
 

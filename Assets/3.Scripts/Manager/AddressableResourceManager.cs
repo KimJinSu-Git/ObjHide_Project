@@ -9,23 +9,8 @@ namespace Bird.Network.Managers
     /// <summary>
     /// 서버와 통신하여 리소스 다운로드 크기를 확인하고 패치를 진행합니다.
     /// </summary>
-    public class AddressableResourceManager : MonoBehaviour
+    public class AddressableResourceManager : Singleton<AddressableResourceManager>
     {
-        public static AddressableResourceManager Instance { get; private set; }
-
-        private void Awake()
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
-        }
-
         public async Task PreloadByLabel(string label, Action<float, long, long> onProgress)
         {
             // 다운로드해야 할 크기 확인 (이미 다운받았다면 0 출력)
