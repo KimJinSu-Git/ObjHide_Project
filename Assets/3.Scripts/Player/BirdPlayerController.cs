@@ -12,6 +12,7 @@ namespace Bird.Network.Player
     [RequireComponent(typeof(BirdPlayerVisual))]
     [RequireComponent(typeof(BirdPlayerCombat))]
     [RequireComponent(typeof(BirdPlayerCamera))]
+    [RequireComponent(typeof(BirdPlayerIdentity))]
     public class BirdPlayerController : NetworkBehaviour
     {
         public static BirdPlayerController Instance { get; private set; }
@@ -37,6 +38,7 @@ namespace Bird.Network.Player
         public BirdPlayerVisual Visual { get; private set; }
         public BirdPlayerCombat Combat { get; private set; }
         public BirdPlayerCamera CameraHandler { get; private set; }
+        public BirdPlayerIdentity Identity { get; private set; }
 
         private NetworkCharacterController _ncc;
 
@@ -47,6 +49,12 @@ namespace Bird.Network.Player
             Visual = GetComponent<BirdPlayerVisual>();
             Combat = GetComponent<BirdPlayerCombat>();
             CameraHandler = GetComponent<BirdPlayerCamera>();
+            Identity = GetComponent<BirdPlayerIdentity>();
+            
+            if (BirdGameManager.Instance != null)
+            {
+                BirdGameManager.Instance.RegisterPlayer(Object.InputAuthority, this);
+            }
             
             if (HasInputAuthority)
             {
@@ -60,6 +68,14 @@ namespace Bird.Network.Player
             }
         }
 
+        public override void Despawned(NetworkRunner runner, bool hasState)
+        {
+            if (BirdGameManager.Instance != null)
+            {
+                BirdGameManager.Instance.UnregisterPlayer(Object.InputAuthority);
+            }
+        }
+        
         private void Update()
         {
             if (HasInputAuthority && Input.GetKeyDown(KeyCode.L))

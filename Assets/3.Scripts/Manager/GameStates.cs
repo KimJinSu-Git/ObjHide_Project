@@ -125,12 +125,14 @@ namespace Bird.Network.Managers
             manager.CheckGameOver();
             if (manager.StateTimer.Expired(manager.Runner))
             {
-                int survivors = manager.Runner.ActivePlayers.Count(p => {
-                    var obj = manager.Runner.GetPlayerObject(p);
-                    if (obj == null) return false;
-                    var ctrl = obj.GetComponent<BirdPlayerController>();
-                    return p != manager.Seeker && ctrl != null && ctrl.Health.CurrentHP > 0;
-                });
+                int survivors = 0;
+                foreach (var kvp in manager.PlayerDict)
+                {
+                    if (kvp.Key != manager.Seeker && kvp.Value.Health.CurrentHP > 0)
+                    {
+                        survivors++;
+                    }
+                }
                 manager.EndGame(false, survivors); 
             }
         }

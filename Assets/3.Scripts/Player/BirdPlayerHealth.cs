@@ -46,8 +46,10 @@ namespace Bird.Network.Player
                 
                 if (attacker != PlayerRef.None && attacker != Object.InputAuthority)
                 {
-                    var seekerObj = Runner.GetPlayerObject(attacker);
-                    seekerObj?.GetComponent<BirdPlayerHealth>()?.Heal(50);
+                    if (BirdGameManager.Instance.PlayerDict.TryGetValue(attacker, out var seekerCtrl))
+                    {
+                        seekerCtrl.Health.Heal(50);
+                    }
                 }
                 
                 OnDeath();

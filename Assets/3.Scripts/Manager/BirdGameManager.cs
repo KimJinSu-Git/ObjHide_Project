@@ -37,6 +37,8 @@ namespace Bird.Network.Managers
         [Networked] public NetworkBool IsSeekerWin { get; set; }
         [Networked] public int FinalSurvivorCount { get; set; }
         
+        public Dictionary<PlayerRef, BirdPlayerController> PlayerDict { get; private set; } = new Dictionary<PlayerRef, BirdPlayerController>();
+        
         private ChangeDetector _changeDetector;
         
         // 상태 패턴 필드
@@ -45,10 +47,19 @@ namespace Bird.Network.Managers
         
         private int _lastSeekerCount = -1;
         private int _lastHiderCount = -1;
+        
+        private void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+        }
 
         public override void Spawned()
         {
-            Instance = this;
+            if (Instance == null) Instance = this; 
+            
             _changeDetector = GetChangeDetector(ChangeDetector.Source.SimulationState);
 
             // 상태 저장소 초기화
@@ -65,6 +76,37 @@ namespace Bird.Network.Managers
 
             // 초기 상태 설정
             TransitionToState(CurrentPhase);
+            
+            foreach (var player in FindObjectsByType<BirdPlayerController>(FindObjectsSortMode.None))
+            {
+                if (player.Object != null && !player.Object.InputAuthority.IsNone)
+                {
+                    // 딕셔너리에 아직 없다면 추가
+                    if (!PlayerDict.ContainsKey(player.Object.InputAuthority))
+                    {
+                        RegisterPlayer(player.Object.InputAuthority, player);
+                    }
+                }
+            }
+        }
+
+        public void RegisterPlayer(PlayerRef playerRef, BirdPlayerController controller)
+        {
+            Debug.Log($"{!playerRef.IsNone} : IsNone, Register 실행 완료");
+            if (!playerRef.IsNone)
+            {
+                PlayerDict[playerRef] = controller;
+                Debug.Log($"[BirdGameManager] 플레이어 등록 완료: {playerRef}");
+            }
+        }
+
+        public void UnregisterPlayer(PlayerRef playerRef)
+        {
+            if (!playerRef.IsNone && PlayerDict.ContainsKey(playerRef))
+            {
+                PlayerDict.Remove(playerRef);
+                Debug.Log($"[BirdGameManager] 플레이어 제거 완료: {playerRef}");
+            }
         }
 
         public override void Render()
@@ -116,16 +158,13 @@ namespace Bird.Network.Managers
 
             int aliveHiders = 0;
             int aliveSeekers = 0;
-
-            foreach (var player in Runner.ActivePlayers)
+            
+            foreach (var kvp in PlayerDict)
             {
-                var playerObj = Runner.GetPlayerObject(player);
-                if (playerObj == null) continue;
-
-                var controller = playerObj.GetComponent<BirdPlayerController>();
+                var controller = kvp.Value;
                 if (controller == null || controller.Health.CurrentHP <= 0) continue;
 
-                if (player == Seeker) aliveSeekers++;
+                if (kvp.Key == Seeker) aliveSeekers++;
                 else aliveHiders++;
             }
             
@@ -155,26 +194,12 @@ namespace Bird.Network.Managers
 
             string attackerName = "System";
             string victimName = "Unknown";
+            
+            if (PlayerDict.TryGetValue(attacker, out var attackerCtrl) && attackerCtrl.Identity != null)
+                attackerName = attackerCtrl.Identity.Nickname.ToString();
 
-            if (attacker != PlayerRef.None)
-            {
-                var attackerObj = Runner.GetPlayerObject(attacker);
-                if (attackerObj != null)
-                {
-                    var identity = attackerObj.GetComponent<BirdPlayerIdentity>();
-                    if (identity != null) attackerName = identity.Nickname.ToString();
-                }
-            }
-
-            if (victim != PlayerRef.None)
-            {
-                var victimObj = Runner.GetPlayerObject(victim);
-                if (victimObj != null)
-                {
-                    var identity = victimObj.GetComponent<BirdPlayerIdentity>();
-                    if (identity != null) victimName = identity.Nickname.ToString();
-                }
-            }
+            if (PlayerDict.TryGetValue(victim, out var victimCtrl) && victimCtrl.Identity != null)
+                victimName = victimCtrl.Identity.Nickname.ToString();
             
             RPC_BroadcastKillLog(attackerName, victimName);
         }
