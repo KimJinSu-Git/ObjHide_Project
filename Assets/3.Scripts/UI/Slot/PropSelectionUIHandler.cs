@@ -19,6 +19,8 @@ namespace Bird.Network.UI
         private Coroutine timerCoroutine;
         
         public bool hasSelected = false;
+        
+        private List<int> _cachedDisplayedIDs = new List<int>();
 
         private void Awake()
         {
@@ -77,12 +79,17 @@ namespace Bird.Network.UI
 
         private void RequestReroll(BirdPropSlotUI targetSlot)
         {
-            List<int> currentDisplayedIDs = slots
-                .Where(s => s.CurrentPropID != -1)
-                .Select(s => s.CurrentPropID)
-                .ToList();
+            _cachedDisplayedIDs.Clear();
             
-            var newPropList = propDatabase.GetRandomUniqueProps(1, currentDisplayedIDs);
+            foreach (var s in slots)
+            {
+                if (s.CurrentPropID != -1)
+                {
+                    _cachedDisplayedIDs.Add(s.CurrentPropID);
+                }
+            }
+            
+            var newPropList = propDatabase.GetRandomUniqueProps(1, _cachedDisplayedIDs);
 
             if (newPropList.Count > 0)
             {

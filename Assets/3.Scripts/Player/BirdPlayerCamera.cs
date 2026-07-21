@@ -147,10 +147,10 @@ namespace Bird.Network.Player
 
         public void ApplySeekerVision(bool isReadyPhase)
         {
-            if (!HasInputAuthority) return;
+            if (!HasInputAuthority || mainCamera == null) return;
             int propLayer = LayerMask.NameToLayer("PropPlayer");
-            if (isReadyPhase) Camera.main.cullingMask &= ~(1 << propLayer);
-            else Camera.main.cullingMask |= (1 << propLayer);
+            if (isReadyPhase) mainCamera.cullingMask &= ~(1 << propLayer);
+            else mainCamera.cullingMask |= (1 << propLayer);
         }
     }
 }

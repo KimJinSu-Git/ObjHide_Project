@@ -24,14 +24,6 @@ namespace Bird.Network.UI
             quitButton.onClick.AddListener(LeaveGame);
         }
 
-        private void Update()
-        {
-            if (_runner == null) 
-            {
-                _runner = FindObjectOfType<NetworkRunner>();
-            }
-        }
-
         public void OpenMenu()
         {
             menuPanel.SetActive(true);
@@ -53,10 +45,15 @@ namespace Bird.Network.UI
         private void LeaveGame()
         {
             quitButton.interactable = false; // 중복 클릭 방지
-
-            if (_runner != null && _runner.IsRunning)
+            
+            var runner = FindAnyObjectByType<NetworkRunner>();
+            if (runner != null && runner.IsRunning)
             {
-                _runner.Shutdown();
+                runner.Shutdown();
+            }
+            else
+            {
+                quitButton.interactable = true;
             }
         }
     }

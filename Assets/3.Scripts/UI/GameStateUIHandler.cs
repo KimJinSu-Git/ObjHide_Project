@@ -13,6 +13,9 @@ namespace Bird.Network.UI
         
         [SerializeField] private TextMeshProUGUI seekerCountText;
         [SerializeField] private TextMeshProUGUI hiderCountText;
+
+        private GamePhase _lastPhase = (GamePhase)(-1);
+        private int _lastTime = -1;
         
         private void OnEnable()
         {
@@ -26,15 +29,33 @@ namespace Bird.Network.UI
 
         private void Update()
         {
-            if (BirdGameManager.Instance == null) return;
-            if (!BirdGameManager.Instance.Object || !BirdGameManager.Instance.Object.IsValid) return;
-            
-            phaseText.text = $"{BirdGameManager.Instance.CurrentPhase}";
+            var gameManager = BirdGameManager.Instance;
+            if (gameManager == null || !gameManager.Object || !gameManager.Object.IsValid) return;
 
-            if (BirdGameManager.Instance.StateTimer.IsRunning)
+            if (_lastPhase != gameManager.CurrentPhase)
             {
-                float? remainingTime = BirdGameManager.Instance.StateTimer.RemainingTime(BirdGameManager.Instance.Runner);
-                timerText.text = remainingTime.HasValue ? $"{Mathf.CeilToInt(remainingTime.Value)} s" : "";
+                _lastPhase = gameManager.CurrentPhase;
+                phaseText.text = _lastPhase.ToString();
+            }
+
+            if (gameManager.StateTimer.IsRunning)
+            {
+                float? remainingTime = gameManager.StateTimer.RemainingTime(gameManager.Runner);
+                if (remainingTime.HasValue)
+                {
+                    int currentSeconds = Mathf.CeilToInt(remainingTime.Value);
+
+                    if (_lastTime != currentSeconds)
+                    {
+                        _lastTime = currentSeconds;
+                        timerText.text = $"{currentSeconds} s";
+                    }
+                }
+            }
+            else if (_lastTime != 0)
+            {
+                _lastTime = 0;
+                timerText.text = "";
             }
         }
         

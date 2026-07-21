@@ -32,6 +32,7 @@ namespace Bird.Network.Player
         private int lastAppliedPropID = -2;
         private BirdPlayerHealth _health;
         private CharacterController _controller;
+        private BirdPlayerController _birdController;
         
         private AsyncOperationHandle<GameObject> _currentPropHandle;
         
@@ -41,6 +42,7 @@ namespace Bird.Network.Player
         {
             _health = GetComponent<BirdPlayerHealth>();
             _controller = GetComponent<CharacterController>();
+            _birdController = GetComponent<BirdPlayerController>();
             
             if(defaultVisual != null) PlayerAnimator = defaultVisual.GetComponent<Animator>();
             
@@ -49,7 +51,8 @@ namespace Bird.Network.Player
         
         private void LateUpdate()
         {
-            float currentPitch = GetComponent<BirdPlayerController>().NetPitch + pitchOffset;
+            if (_birdController == null) return;
+            float currentPitch = _birdController.NetPitch + pitchOffset;
 
             if (spineBones != null && spineBones.Length > 0)
             {

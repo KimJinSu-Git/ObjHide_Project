@@ -1,4 +1,6 @@
+using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Bird.Network.Player
 {
@@ -14,14 +16,23 @@ namespace Bird.Network.Player
         [SerializeField] private AudioClip gunShotSFX;
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private Vector2 pitchRange = new Vector2(0.9f, 1.1f);
+        
+        private ParticleSystem[] _muzzleParticles;
+
+        private void Awake()
+        {
+            if (muzzleFlashObj != null)
+            {
+                _muzzleParticles = muzzleFlashObj.GetComponentsInChildren<ParticleSystem>();
+            }
+        }
 
         public void PlayFireEffects()
         {
             // 총구 화염 파티클 재생
             if (muzzleFlashObj != null)
             {
-                ParticleSystem[] particles = muzzleFlashObj.GetComponentsInChildren<ParticleSystem>();
-                foreach (var p in particles)
+                foreach (var p in _muzzleParticles)
                 {
                     p.Play();
                 }

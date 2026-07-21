@@ -14,10 +14,7 @@ namespace Bird.Network.UI
         [SerializeField] private Button startButton;
         [SerializeField] private TextMeshProUGUI playerCountText;
 
-        private NetworkRunner _runner;
-        
-        private bool _isLobby;
-        private int _currentPlayers;
+        private int _lastPlayerCount = -1;
 
         private void Start()
         {
@@ -26,31 +23,38 @@ namespace Bird.Network.UI
 
         private void Update()
         {
-            if (_runner == null)
+            var gameManager = BirdGameManager.Instance;
+            if (gameManager == null || gameManager.Runner == null || !gameManager.Runner.IsRunning) return;
+            
+            bool isLobby = gameManager.CurrentPhase == GamePhase.Lobby;
+            
+            if (readyPanel.activeSelf != isLobby)
             {
-                _runner = FindObjectOfType<NetworkRunner>();
+                readyPanel.SetActive(isLobby);
             }
-            
-            if (_runner == null || !_runner.IsRunning) return;
-            
-            _isLobby = BirdGameManager.Instance != null && BirdGameManager.Instance.CurrentPhase == GamePhase.Lobby;
-            readyPanel.SetActive(_isLobby);
 
-            if (_isLobby)
+            if (isLobby)
             {
-                _currentPlayers = _runner.ActivePlayers.Count();
-                playerCountText.text = $"Player : {_currentPlayers} / 10";
+                int currentPlayers = gameManager.PlayerDict.Count;
                 
-                startButton.interactable = _runner.IsServer && _currentPlayers >= 2;
-                startButton.gameObject.SetActive(_runner.IsServer);
+                if (_lastPlayerCount != currentPlayers)
+                {
+                    _lastPlayerCount = currentPlayers;
+                    playerCountText.text = $"Player : {currentPlayers} / 10";
+                }
+                
+                bool canStart = gameManager.Runner.IsServer && currentPlayers >= 2;
+                if (startButton.interactable != canStart) startButton.interactable = canStart;
+                if (startButton.gameObject.activeSelf != gameManager.Runner.IsServer) startButton.gameObject.SetActive(gameManager.Runner.IsServer);
             }
         }
 
         private void OnStartButtonClicked()
         {
-            if (_runner.IsServer && BirdGameManager.Instance != null)
+            var gameManager = BirdGameManager.Instance;
+            if (gameManager != null && gameManager.Runner != null && gameManager.Runner.IsServer)
             {
-                BirdGameManager.Instance.ManualStartGame();
+                gameManager.ManualStartGame();
             }
         }
     }

@@ -34,7 +34,8 @@ namespace Bird.Network.UI
             
             Vector3 moveDir = (forward * inputVector.z) + (right * inputVector.x);
             
-            currentFreePos += moveDir * (10f * Time.deltaTime);
+            float moveSpeed = 10f * Time.deltaTime;
+            currentFreePos += moveDir * moveSpeed;
         
             return currentFreePos;
         }

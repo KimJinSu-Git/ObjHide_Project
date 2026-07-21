@@ -14,10 +14,14 @@ namespace Bird.Network.Player
         private BirdPlayerHealth _health;
         private BirdPlayerController _controller;
 
+        private int _hitscanLayerMask;
+
         public override void Spawned()
         {
             _health = GetComponent<BirdPlayerHealth>();
             _controller = GetComponent<BirdPlayerController>();
+
+            _hitscanLayerMask = LayerMask.GetMask("PropPlayer", "Environment");
             
             if (HasInputAuthority && FireButtonHandler.Instance != null)
             {
@@ -55,12 +59,11 @@ namespace Bird.Network.Player
         private void RPC_FireHitscan(Vector3 origin, Vector3 direction)
         {
             bool hitAnything = false;
-            int layerMask = LayerMask.GetMask("PropPlayer", "Environment");
             
             for (int i = 0; i < 5; i++)
             {
                 Vector3 spread = new Vector3(Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f));
-                if (Physics.Raycast(origin, (direction + spread).normalized, out RaycastHit hit, 100f, layerMask))
+                if (Physics.Raycast(origin, (direction + spread).normalized, out RaycastHit hit, 100f, _hitscanLayerMask))
                 {
                     if (hit.collider.gameObject.layer == LayerMask.NameToLayer("PropPlayer"))
                     {
