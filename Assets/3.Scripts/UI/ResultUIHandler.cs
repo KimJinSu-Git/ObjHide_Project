@@ -83,14 +83,24 @@ namespace Bird.Network.UI
         {
             Debug.Log("[Bird] 로비로 돌아갑니다.");
             
+            if (BirdGameManager.Instance != null && BirdGameManager.Instance.Runner != null)
+            {
+                BirdGameManager.Instance.Runner.Shutdown();
+            }
+            else if (NetworkRunner.Instances.Count > 0) 
+            {
+                NetworkRunner.Instances[0].Shutdown();
+            }
+            /*
             var runner = FindObjectOfType<NetworkRunner>();
             if (runner != null)
             {
                 runner.Shutdown();
             }
+            */
         }
 
-        public void CloseUI()
+        private void CloseUI()
         {
             resultPanel.SetActive(false);
             if (canvasGroup != null) canvasGroup.alpha = 0;

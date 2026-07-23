@@ -11,12 +11,14 @@ namespace Bird.Network.UI
         [SerializeField] private TextMeshProUGUI statusText;
         
         private float _targetProgress;
+        private float _lastDisplayedMB = -1f;
 
         public void Show(string message)
         {
             loadingPanel.SetActive(true);
             progressSlider.value = 0;
             _targetProgress = 0;
+            _lastDisplayedMB = -1f;
             statusText.text = message;
         }
 
@@ -30,8 +32,14 @@ namespace Bird.Network.UI
                 // 바이트를 메가바이트로 변환
                 float downloadedMB = downloadedBytes / (1024f * 1024f);
                 float totalMB = totalBytes / (1024f * 1024f);
-        
-                statusText.text = $"Resource Download... ({downloadedMB:F1} / {totalMB:F1} MB)";
+                
+                float roundedCurrentMB = Mathf.Round(downloadedMB * 10f) / 10f;
+
+                if (!Mathf.Approximately(_lastDisplayedMB, roundedCurrentMB))
+                {
+                    statusText.text = $"Resource Download... ({downloadedMB:F1} / {totalMB:F1} MB)";
+                    _lastDisplayedMB = roundedCurrentMB;
+                }
             }
             else if (progress >= 1f)
             {
@@ -47,7 +55,6 @@ namespace Bird.Network.UI
         private void Update()
         {
             if (!loadingPanel.activeSelf) return;
-            
             progressSlider.value = Mathf.Lerp(progressSlider.value, _targetProgress, Time.deltaTime * 5f);
         }
     }
