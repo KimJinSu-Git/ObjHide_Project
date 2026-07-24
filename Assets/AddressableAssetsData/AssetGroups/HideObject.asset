@@ -33,6 +33,11 @@ MonoBehaviour:
     m_SerializedLabels:
     - Preload
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 32b05eca44a09264cac88efce4176ff5
+    m_Address: Assets/8.Prefabs/Object/HideObject/h100Under/urinal.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 70b2ef9c1a6cce24d8547dede628bdeb
     m_Address: GameScene
     m_ReadOnly: 0
@@ -56,6 +61,21 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - Preload
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cb74522ef7f4a624da7f48de4fe52528
+    m_Address: Assets/8.Prefabs/Object/HideObject/h100Under/File box blue.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: de56cc7a23a29aa469e640e1ec3a2c1b
+    m_Address: Assets/8.Prefabs/Object/HideObject/h100Under/computer screen.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f8a0b22b852c4a645841dd838afcd07b
+    m_Address: Assets/8.Prefabs/Object/HideObject/h100Up/File cupboard 2.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f9c9852132e7958409938593709abf93
     m_Address: Assets/8.Prefabs/Object/HideObject/Bottle.prefab
