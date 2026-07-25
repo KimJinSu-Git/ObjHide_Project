@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Bottle
   m_EditorClassIdentifier: 
   PropID: 4
-  PropName: Bottle
+  PropName: "\uBB3C\uBCD1"
+  PropIcon: {fileID: 21300000, guid: ecb6c1b6536f10943a42c2030a2efdbb, type: 3}
   PropPrefabRef:
     m_AssetGUID: f9c9852132e7958409938593709abf93
     m_SubObjectName: 

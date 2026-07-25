@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: ComputerScreen
   m_EditorClassIdentifier: 
   PropID: 7
-  PropName: ComputerScreen
+  PropName: "\uCEF4\uD4E8\uD130 \uBAA8\uB2C8\uD130"
+  PropIcon: {fileID: 21300000, guid: d527ef7195d200e4bb155cbd614b4ac3, type: 3}
   PropPrefabRef:
     m_AssetGUID: de56cc7a23a29aa469e640e1ec3a2c1b
     m_SubObjectName: 

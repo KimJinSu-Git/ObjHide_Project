@@ -33,6 +33,8 @@ namespace Bird.Network.Player
 
         private float _localPropYaw;
         private int _lastJumpCount = 0;
+
+        private float _defaultGravity = -20f;
         
         public BirdPlayerHealth Health { get; private set; }
         public BirdPlayerVisual Visual { get; private set; }
@@ -54,6 +56,11 @@ namespace Bird.Network.Player
             if (BirdGameManager.Instance != null)
             {
                 BirdGameManager.Instance.RegisterPlayer(Object.InputAuthority, this);
+            }
+            
+            if (_ncc != null)
+            {
+                _defaultGravity = _ncc.gravity;
             }
             
             if (HasInputAuthority)
@@ -121,6 +128,35 @@ namespace Bird.Network.Player
                         NetVertical = 0;
                     }
                     
+                    if (!isLockedNow)
+                    {
+                        if (jumpPressed && _ncc.Grounded)
+                        {
+                            _ncc.Jump();
+                            JumpCount++;
+                        }
+
+                        _ncc.Move(moveVector);
+                        
+                        if (!jumpPressed && _ncc.Grounded)
+                        {
+                            Vector3 currentVel = _ncc.Velocity;
+                            if (currentVel.y > 0)
+                            {
+                                currentVel.y = 0f; 
+                                _ncc.Velocity = currentVel;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _ncc.Velocity = Vector3.zero;
+                    }
+                    
+                    NetIsGrounded = _ncc.Grounded;
+                    PrevButtons = data.Buttons;
+                    
+                    /*
                     if (!isLockedNow && jumpPressed && _ncc.Grounded)
                     {
                         _ncc.Jump();
@@ -144,6 +180,7 @@ namespace Bird.Network.Player
                     
                     NetIsGrounded = _ncc.Grounded;
                     PrevButtons = data.Buttons;
+                    */
                 }
             }
         }
@@ -176,10 +213,30 @@ namespace Bird.Network.Player
                 _localPropYaw = Mathf.Round(currentYaw / 90f) * 90f; // 90도 스냅 연산
                 RPC_SetPropYaw(_localPropYaw);
             }
+            
+            RPC_SetGravityState(!willLock);
 
             if (PropAlignmentHandler.Instance != null)
             {
                 PropAlignmentHandler.Instance.SetSubButtonsVisible(willLock);
+            }
+        }
+        
+        [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+        private void RPC_SetGravityState(bool enableGravity)
+        {
+            if (_ncc != null)
+            {
+                // 중력을 켜야하면 원래 중력값 복구, 꺼야하면 0으로 설정
+                _ncc.gravity = enableGravity ? _defaultGravity : 0f;
+                
+                // 만약 중력을 끄는 거라면, 현재 떨어지고 있던 가속도(Velocity.y)도 즉시 지워버림
+                if (!enableGravity)
+                {
+                    Vector3 currentVel = _ncc.Velocity;
+                    currentVel.y = 0f;
+                    _ncc.Velocity = currentVel;
+                }
             }
         }
         

@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Filecupboard2
   m_EditorClassIdentifier: 
   PropID: 10
-  PropName: Filecupboard2
+  PropName: "\uD30C\uC77C \uCE90\uBE44\uB2DB"
+  PropIcon: {fileID: 21300000, guid: 1686c9d6bedb8af41b18c8002901e49e, type: 3}
   PropPrefabRef:
     m_AssetGUID: f8a0b22b852c4a645841dd838afcd07b
     m_SubObjectName: 

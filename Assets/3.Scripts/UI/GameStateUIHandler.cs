@@ -35,7 +35,7 @@ namespace Bird.Network.UI
             if (_lastPhase != gameManager.CurrentPhase)
             {
                 _lastPhase = gameManager.CurrentPhase;
-                phaseText.text = _lastPhase.ToString();
+                phaseText.text = GetPhaseKoreanName(_lastPhase);
             }
 
             if (gameManager.StateTimer.IsRunning)
@@ -63,6 +63,21 @@ namespace Bird.Network.UI
         {
             seekerCountText.text = $"{seekers}";
             hiderCountText.text = $"{hiders}";
+        }
+        
+        private string GetPhaseKoreanName(GamePhase phase)
+        {
+            switch (phase)
+            {
+                case GamePhase.Lobby:   return "대기실";
+                case GamePhase.Ready:   return "준비 시간";
+                case GamePhase.Hide:    return "숨는 시간";
+                case GamePhase.Reroll:  return "2차 선택 시간";
+                case GamePhase.Final:   return "최종 시간";
+                case GamePhase.Fever:   return "피버 타임!";
+                case GamePhase.Result:  return "게임 종료";
+                default:                return "알 수 없음";
+            }
         }
     }
 }

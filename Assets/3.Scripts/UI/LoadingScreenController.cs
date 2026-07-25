@@ -37,13 +37,13 @@ namespace Bird.Network.UI
 
                 if (!Mathf.Approximately(_lastDisplayedMB, roundedCurrentMB))
                 {
-                    statusText.text = $"Resource Download... ({downloadedMB:F1} / {totalMB:F1} MB)";
+                    statusText.text = $"리소스 다운로드 중... ({downloadedMB:F1} / {totalMB:F1} MB)";
                     _lastDisplayedMB = roundedCurrentMB;
                 }
             }
             else if (progress >= 1f)
             {
-                statusText.text = "Game Start!";
+                statusText.text = "게임 접속!";
             }
         }
 

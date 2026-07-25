@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: ClimbPoles
   m_EditorClassIdentifier: 
   PropID: 6
-  PropName: ClimbPoles
+  PropName: "\uC0AC\uB2E4\uB9AC"
+  PropIcon: {fileID: 21300000, guid: f6f5fa3e77d8c1644ab1e052143ab18a, type: 3}
   PropPrefabRef:
     m_AssetGUID: 24c6a3f47a5a6ed42ba160730c0e6286
     m_SubObjectName: 

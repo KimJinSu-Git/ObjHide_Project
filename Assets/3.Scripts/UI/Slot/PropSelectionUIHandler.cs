@@ -17,6 +17,7 @@ namespace Bird.Network.UI
         [SerializeField] private TextMeshProUGUI timerText;
 
         private Coroutine timerCoroutine;
+        private WaitForSeconds _waitForOneSeconds;
         
         public bool hasSelected = false;
         
@@ -25,6 +26,7 @@ namespace Bird.Network.UI
         private void Awake()
         {
             panel.SetActive(false);
+            _waitForOneSeconds = new WaitForSeconds(1f);
         }
         
         private IEnumerator Start()
@@ -103,8 +105,8 @@ namespace Bird.Network.UI
             float remaining = duration;
             while (remaining > 0)
             {
-                timerText.text = $"Choose Time : {Mathf.CeilToInt(remaining)}s)";
-                yield return new WaitForSeconds(1f);
+                timerText.text = $"선택 시간 : {Mathf.CeilToInt(remaining)}s";
+                yield return _waitForOneSeconds;
                 remaining--;
             }
 
@@ -127,7 +129,7 @@ namespace Bird.Network.UI
             CloseUI();
         }
 
-        public void CloseUI()
+        private void CloseUI()
         {
             panel.SetActive(false);
             if (timerCoroutine != null) StopCoroutine(timerCoroutine);

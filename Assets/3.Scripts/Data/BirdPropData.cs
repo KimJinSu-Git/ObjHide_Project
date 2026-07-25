@@ -8,6 +8,8 @@ namespace Bird.Network.Data
     {
         public int PropID; // 고유 사물 번호
         public string PropName; // 사물 이름 (UI 표시용)
+
+        public Sprite PropIcon;
         
         // public GameObject PropPrefab;
         public AssetReferenceGameObject PropPrefabRef; // 실제 사물 모델링 

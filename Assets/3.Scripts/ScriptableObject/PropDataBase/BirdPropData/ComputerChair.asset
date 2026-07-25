@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: ComputerChair
   m_EditorClassIdentifier: 
   PropID: 1
-  PropName: ComputerChair
+  PropName: "\uCEF4\uD4E8\uD130 \uC758\uC790"
+  PropIcon: {fileID: 21300000, guid: cd0ec530a34f7c34dab802f3cdba0bf7, type: 3}
   PropPrefabRef:
     m_AssetGUID: a6653e52fa24d0d49ab4192b9cc79dfb
     m_SubObjectName: 

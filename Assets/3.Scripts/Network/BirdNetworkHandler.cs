@@ -83,16 +83,6 @@ namespace Bird.Network.Handlers
             }
         }
 
-        private void Update()
-        {
-            /*
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                BirdInputManager.IsJumpPressed = true;
-            }
-            */
-        }
-
         /// <summary>
         /// 플레이어가 서버에 접속했을 때 호출됩니다.
         /// Instantiate와 runner.Spawn의 차이
@@ -112,7 +102,7 @@ namespace Bird.Network.Handlers
             Vector3 spawnPos = new Vector3(Random.Range(-3, 3), 1, Random.Range(-3, 3));
             var playerObject = runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
             
-            // 핵심 : 퓨전 엔진에 이 플레이어의 대표 몸체가 누구인지 알려줍니다.
+            // 퓨전 엔진에 이 플레이어의 대표 몸체가 누구인지 알려줍니다.
             runner.SetPlayerObject(player, playerObject);
             
             spawnedCharacters.Add(player, playerObject);

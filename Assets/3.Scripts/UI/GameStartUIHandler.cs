@@ -40,7 +40,7 @@ namespace Bird.Network.UI
                 if (_lastPlayerCount != currentPlayers)
                 {
                     _lastPlayerCount = currentPlayers;
-                    playerCountText.text = $"Player : {currentPlayers} / 10";
+                    playerCountText.text = $"유저 : {currentPlayers} / 10";
                 }
                 
                 bool canStart = gameManager.Runner.IsServer && currentPlayers >= 2;

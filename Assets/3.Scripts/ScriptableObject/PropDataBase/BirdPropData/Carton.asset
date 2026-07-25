@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Carton
   m_EditorClassIdentifier: 
   PropID: 5
-  PropName: carton
+  PropName: "\uC885\uC774 \uC0C1\uC790"
+  PropIcon: {fileID: 21300000, guid: bb25f912db6536f41b8dc6ad7b2f5ae7, type: 3}
   PropPrefabRef:
     m_AssetGUID: 223aacf709fe6d0488b72c3f5f823ea4
     m_SubObjectName: 

@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: CouchOffice2
   m_EditorClassIdentifier: 
   PropID: 3
-  PropName: CouchOffice2
+  PropName: "\uC0AC\uBB34\uC6A9 \uC18C\uD30C2"
+  PropIcon: {fileID: 21300000, guid: 7381bb61e6b776a4c9ae830903cb81f5, type: 3}
   PropPrefabRef:
     m_AssetGUID: 0dc708782a067064c91ca4f0b7ffc988
     m_SubObjectName: 

@@ -47,7 +47,7 @@ namespace Bird.Network.UI
         {
             if (_logCoroutine != null) StopCoroutine(_logCoroutine);
             
-            logText.text = $"<color=#FF5555>{attacker}</color> caught <color=#55AAFF>{victim}</color>";
+            logText.text = $"<color=#FF5555>{attacker}</color>님이 <color=#55AAFF>{victim}</color>님을 잡았습니다.";
             
             _logCoroutine = StartCoroutine(Co_ProcessLog());
         }

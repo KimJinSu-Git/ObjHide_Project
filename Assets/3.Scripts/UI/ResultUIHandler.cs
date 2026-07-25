@@ -50,13 +50,13 @@ namespace Bird.Network.UI
 
             if (isSeekerWin)
             {
-                winTitleText.text = "Seeker Victory";
-                statsText.text = "Survivor All Killed";
+                winTitleText.text = "술래 승리";
+                statsText.text = "술래가 모든 생존자를 찾아넀습니다";
             }
             else
             {
-                winTitleText.text = "Survivor Victory";
-                statsText.text = $"Remain Survivor : {survivorCount}";
+                winTitleText.text = "생존자 승리";
+                statsText.text = $"살아남은 생존자 : {survivorCount}";
             }
 
             if (canvasGroup != null)

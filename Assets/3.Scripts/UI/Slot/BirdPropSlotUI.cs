@@ -9,6 +9,7 @@ namespace Bird.Network.UI
     public class BirdPropSlotUI : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI propNameText;
+        [SerializeField] private Image propIconImage;
         [SerializeField] private Button selectButton;
         [SerializeField] private Button rerollButton;
 
@@ -21,6 +22,11 @@ namespace Bird.Network.UI
         {
             currentData = data;
             propNameText.text = data.PropName;
+            
+            if (propIconImage != null)
+            {
+                propIconImage.sprite = data.PropIcon;
+            }
             
             selectButton.onClick.RemoveAllListeners();
             selectButton.onClick.AddListener(() => onSelect?.Invoke(currentData.PropID));

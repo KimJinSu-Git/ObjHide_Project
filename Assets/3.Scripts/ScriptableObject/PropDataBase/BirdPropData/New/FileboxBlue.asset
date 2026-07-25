@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: FileboxBlue
   m_EditorClassIdentifier: 
   PropID: 8
-  PropName: BlueFilebox
+  PropName: "\uD30C\uB780 \uD30C\uC77C\uBC15\uC2A4"
+  PropIcon: {fileID: 21300000, guid: ff2dfab05efd10e4cb474de89ee0c9ae, type: 3}
   PropPrefabRef:
     m_AssetGUID: cb74522ef7f4a624da7f48de4fe52528
     m_SubObjectName: 
