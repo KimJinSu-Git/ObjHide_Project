@@ -92,11 +92,10 @@ namespace Bird.Network.Managers
 
         public void RegisterPlayer(PlayerRef playerRef, BirdPlayerController controller)
         {
-            Debug.Log($"{!playerRef.IsNone} : IsNone, Register 실행 완료");
             if (!playerRef.IsNone)
             {
                 PlayerDict[playerRef] = controller;
-                Debug.Log($"[BirdGameManager] 플레이어 등록 완료: {playerRef}");
+                // Debug.Log($"[BirdGameManager] 플레이어 등록 완료: {playerRef}");
             }
         }
 
@@ -105,7 +104,7 @@ namespace Bird.Network.Managers
             if (!playerRef.IsNone && PlayerDict.ContainsKey(playerRef))
             {
                 PlayerDict.Remove(playerRef);
-                Debug.Log($"[BirdGameManager] 플레이어 제거 완료: {playerRef}");
+                // Debug.Log($"[BirdGameManager] 플레이어 제거 완료: {playerRef}");
             }
         }
 
@@ -130,7 +129,7 @@ namespace Bird.Network.Managers
             {
                 _currentState = newState;
                 _currentState.Enter(this);
-                Debug.Log($"[Bird] 페이즈 전환: {nextPhase}");
+                // Debug.Log($"[Bird] 페이즈 전환: {nextPhase}");
             }
         }
 
@@ -236,7 +235,7 @@ namespace Bird.Network.Managers
             // 혼자 남은 경우 강제 종료
             if (activeCount <= 1)
             {
-                Debug.Log("[Bird] 인원 부족으로 게임을 강제 종료합니다.");
+                // Debug.Log("[Bird] 인원 부족으로 게임을 강제 종료합니다.");
                 bool isRemainingSeeker = (Seeker != leftPlayer); 
                 EndGame(isRemainingSeeker, activeCount);
                 return;
@@ -245,7 +244,7 @@ namespace Bird.Network.Managers
             // 술래가 나간 경우
             if (Seeker == leftPlayer)
             {
-                Debug.Log("[Bird] 술래가 도주했습니다! 도망자의 승리입니다.");
+                // Debug.Log("[Bird] 술래가 도주했습니다! 도망자의 승리입니다.");
                 EndGame(false, activeCount);
                 return;
             }

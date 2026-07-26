@@ -66,11 +66,6 @@ namespace Bird.Network.Player
                     }
                 }
             }
-
-            if (headBone != null)
-            {
-                // headBone.localRotation = headBone.localRotation * Quaternion.Euler(-10f, 0, 0); 
-            }
         }
 
         private void OnPropIDChanged() => UpdateAppearance();

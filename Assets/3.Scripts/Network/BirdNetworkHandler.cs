@@ -33,9 +33,9 @@ namespace Bird.Network.Handlers
             if (_isConnecting) return;
             _isConnecting = true;
             
-            Debug.Log($"[Bird] 맵 데이터 다운로드 및 씬 로드 중... ({gameSceneName})");
+            // Debug.Log($"[Bird] 맵 데이터 다운로드 및 씬 로드 중... ({gameSceneName})");
             await Addressables.LoadSceneAsync(gameSceneName).Task;
-            Debug.Log("[Bird] 씬 로드 완료! 네트워크 접속을 시작합니다.");
+            // Debug.Log("[Bird] 씬 로드 완료! 네트워크 접속을 시작합니다.");
             
             _eventSystem = EventSystem.current;
             _eventSystem.enabled = false;
@@ -65,7 +65,7 @@ namespace Bird.Network.Handlers
 
             if (result.Ok)
             {
-                Debug.Log($"[Bird] {mode} 성공. 게임 씬으로 이동합니다.");
+                // Debug.Log($"[Bird] {mode} 성공. 게임 씬으로 이동합니다.");
                 
                 if (currentRunner.IsServer)
                 {
@@ -97,7 +97,7 @@ namespace Bird.Network.Handlers
             if (!runner.IsServer) return; // 서버 권한을 가진 사람만 생성 권한이 있습니다.
             if (spawnedCharacters.ContainsKey(player)) return;
             
-            Debug.Log($"[Bird] 플레이어 접속 : {player}. 캐릭터를 생성합니다.");
+            // Debug.Log($"[Bird] 플레이어 접속 : {player}. 캐릭터를 생성합니다.");
             
             Vector3 spawnPos = new Vector3(Random.Range(-3, 3), 1, Random.Range(-3, 3));
             var playerObject = runner.Spawn(playerPrefab, spawnPos, Quaternion.identity, player);
@@ -115,7 +115,7 @@ namespace Bird.Network.Handlers
             {
                 runner.Despawn(networkObject);
                 spawnedCharacters.Remove(player);
-                Debug.Log($"[Bird] 플레이어 퇴장 : {player}. 캐릭터를 제거했습니다.");
+                // Debug.Log($"[Bird] 플레이어 퇴장 : {player}. 캐릭터를 제거했습니다.");
             }
 
             if (runner.IsServer)
@@ -130,7 +130,7 @@ namespace Bird.Network.Handlers
 
         public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
         {
-            Debug.Log($"[Bird] 네트워크 세션이 종료되었습니다. 사유: {shutdownReason}");
+            // Debug.Log($"[Bird] 네트워크 세션이 종료되었습니다. 사유: {shutdownReason}");
 
             _isConnecting = false;
             

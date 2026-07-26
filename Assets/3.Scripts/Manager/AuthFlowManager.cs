@@ -29,7 +29,7 @@ namespace Bird.Network.Managers
     
             if (auth != null && auth.CurrentUser != null)
             {
-                Debug.Log("[AuthFlow] 이미 로그인된 유저입니다. 즉시 리소스 체크를 시작합니다.");
+                // Debug.Log("[AuthFlow] 이미 로그인된 유저입니다. 즉시 리소스 체크를 시작합니다.");
                 HandleLoginSuccess(auth.CurrentUser);
             }
         }
@@ -41,20 +41,20 @@ namespace Bird.Network.Managers
             
             await Task.Delay(100);
             
-            Debug.Log("[AuthFlow] 로그인 완료.");
+            // Debug.Log("[AuthFlow] 로그인 완료.");
 
             string myNickname = await FirebaseDatabaseManager.Instance.LoadNicknameAsync(user.UserId);
 
             if (string.IsNullOrEmpty(myNickname) || myNickname == "Unknown" || myNickname == "ErrorName")
             {
                 myNickname = GenerateRandomGuestname();
-                Debug.Log($"[AuthFlow] 신규 유저입니다. 닉네임 자동 생성: {myNickname}");
+                // Debug.Log($"[AuthFlow] 신규 유저입니다. 닉네임 자동 생성: {myNickname}");
                 
                 await FirebaseDatabaseManager.Instance.SaveNicknameAsync(user.UserId, myNickname);
             }
             else
             {
-                Debug.Log($"[AuthFlow] 기존 유저입니다. 환영합니다: {myNickname}");
+                // Debug.Log($"[AuthFlow] 기존 유저입니다. 환영합니다: {myNickname}");
             }
             
             LocalNickname = myNickname;
@@ -75,7 +75,7 @@ namespace Bird.Network.Managers
         {
             try
             {
-                Debug.Log($"[AuthFlow] 로비 진입 준비 완료! 확정된 닉네임: {nickname}");
+                // Debug.Log($"[AuthFlow] 로비 진입 준비 완료! 확정된 닉네임: {nickname}");
         
                 if (loadingUI != null)
                 {
@@ -90,7 +90,7 @@ namespace Bird.Network.Managers
                     loadingUI.Hide();
                 }
         
-                Debug.Log("[AuthFlow] 모든 리소스 준비 완료! 로비 씬으로 진입합니다.");
+                // Debug.Log("[AuthFlow] 모든 리소스 준비 완료! 로비 씬으로 진입합니다.");
         
                 await Addressables.LoadSceneAsync("LobbyScene").Task; 
             }

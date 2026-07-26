@@ -155,32 +155,6 @@ namespace Bird.Network.Player
                     
                     NetIsGrounded = _ncc.Grounded;
                     PrevButtons = data.Buttons;
-                    
-                    /*
-                    if (!isLockedNow && jumpPressed && _ncc.Grounded)
-                    {
-                        _ncc.Jump();
-                        JumpCount++;
-                    }
-                    
-                    if (_ncc != null) 
-                    {
-                        _ncc.Move(moveVector);
-                        
-                        if (!jumpPressed && _ncc.Grounded)
-                        {
-                            Vector3 currentVel = _ncc.Velocity;
-                            if (currentVel.y > 0)
-                            {
-                                currentVel.y = 0f; 
-                                _ncc.Velocity = currentVel;
-                            }
-                        }
-                    }
-                    
-                    NetIsGrounded = _ncc.Grounded;
-                    PrevButtons = data.Buttons;
-                    */
                 }
             }
         }
@@ -289,22 +263,5 @@ namespace Bird.Network.Player
                 CameraHandler.ApplySeekerVision(false);
             }
         }
-        
-        /*
-         * 개발 중 발생했던 문제점 => 플레이어 이동 동기화 이슈
-         * 상황 => 클라이언트의 이동 속도가 호스트보다 2배 가량 빠름 + 호스트와 클라이언트의 위치 불일치 발생
-         * 원인 => 이중 위치 연산 및 물리 - 네트워크 간섭
-         * 1. 컴포넌트 간의 주도권 싸움 :
-         *  - 기존 NetworkTransform은 단순히 오브젝트의 Transform(좌표)을 강제로 맞추려 합니다.
-         *  - 반면 CharacterController는 유니티의 물리 엔진을 바탕으로 스스로 이동하려고 합니다.
-         *  - 클라이언트 화면에서는 내가 직접 움직이는 힘과 네트워크가 강제로 맞추려는 힘이 동시에 작용하여 가속도가 붙거나 위치가 튀게 된 현상입니다.
-         *
-         * 2. 클라이언트 예측의 부재 :
-         *  - 일반 NetworkTransform은 CharacterController가 물리적으로 이동한 결과를 즉각적으로 네트워크 틱에 통합하지 못합니다.
-         *  - NetworkCharacterController는 내부적으로 물리 이동 -> 네트워크 틱에 기록 -> 클라이언트 예측 반영 과정을 하나로 묶어 처리하므로 이 충돌을 해결합니다.
-         *
-         * 해결 => 기존의 CharacterController와 NetworkTransform을 사용하던 방식을 폐기하고, CharacterController와 NetworkCharacterController를 사용하도록 변경함으로써 해결되었습니다.
-         * 비유 설명 => 기차(NetworkTransform) 위에 올라탄 사람(CharacterController)이 앞으로 달려가면, 밖에서 볼 때 기차 속도+사람 속도가 합쳐져 보이듯 빨라졌던 것입니다. NetworkCharacterController는 사람을 기차의 일부로 고정시켜 주는 역할을 합니다.
-         */
     }
 }

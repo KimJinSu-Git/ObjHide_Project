@@ -38,7 +38,7 @@ namespace Bird.Network.UI
                 // 이미 연동된 유저라면 버튼 비활성화 및 텍스트 변경
                 linkGoogleButton.enabled = false;
                 linkGoogleButton.interactable = false;
-                Debug.Log("[AccountUI] 이 계정은 이미 구글 계정과 안전하게 연동되어 있습니다.");
+                // Debug.Log("[AccountUI] 이 계정은 이미 구글 계정과 안전하게 연동되어 있습니다.");
             }
             else
             {
@@ -59,13 +59,13 @@ namespace Bird.Network.UI
 
             if (success)
             {
-                Debug.Log("[AccountUI] 구글 계정 연동에 성공하여 UI를 갱신합니다.");
+                // Debug.Log("[AccountUI] 구글 계정 연동에 성공하여 UI를 갱신합니다.");
                 linkGoogleButton.enabled = false;
                 linkGoogleButton.interactable = false;
             }
             else
             {
-                Debug.LogWarning("[AccountUI] 구글 계정 연동 실패.");
+                // Debug.LogWarning("[AccountUI] 구글 계정 연동 실패.");
                 linkGoogleButton.enabled = true;
                 linkGoogleButton.interactable = true;
             }

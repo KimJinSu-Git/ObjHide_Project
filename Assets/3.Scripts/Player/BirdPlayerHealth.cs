@@ -38,7 +38,7 @@ namespace Bird.Network.Player
             if (!HasStateAuthority || CurrentHP <= 0) return;
 
             CurrentHP -= damage;
-            Debug.Log($"[Bird] {Object.InputAuthority} 피격! 남은 체력: {CurrentHP}");
+            // Debug.Log($"[Bird] {Object.InputAuthority} 피격! 남은 체력: {CurrentHP}");
 
             if (CurrentHP <= 0)
             {
@@ -64,9 +64,8 @@ namespace Bird.Network.Player
 
         private void OnDeath()
         {
-            Debug.Log($"{Object.InputAuthority} 플레이어 사망!");
+            // Debug.Log($"{Object.InputAuthority} 플레이어 사망!");
             
-            // GetComponent<BirdPlayerVisual>()?.HandleDeath();
             _controller.Visual?.HandleDeath();
 
             if (HasInputAuthority)

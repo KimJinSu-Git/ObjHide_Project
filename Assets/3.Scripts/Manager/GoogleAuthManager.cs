@@ -31,7 +31,7 @@ namespace Bird.Network.Managers
                 RequestEmail = true,
                 WebClientId = webClientId,
             };
-            Debug.Log("[GoogleAuthManager] 구글 로그인 초기화 완료");
+            // Debug.Log("[GoogleAuthManager] 구글 로그인 초기화 완료");
         }
 
         /// <summary>
@@ -41,11 +41,11 @@ namespace Bird.Network.Managers
         {
             try
             {
-                Debug.Log("[GoogleAuthManager] 구글 서버에 로그인(토큰 발급) 요청 중 ");
+                // Debug.Log("[GoogleAuthManager] 구글 서버에 로그인(토큰 발급) 요청 중 ");
 
                 GoogleSignInUser user = await GoogleSignIn.DefaultInstance.SignIn();
                 
-                Debug.Log($"[GoogleAuthManager] 구글 로그인 성공 ! 환영합니다 : {user.DisplayName}");
+                // Debug.Log($"[GoogleAuthManager] 구글 로그인 성공 ! 환영합니다 : {user.DisplayName}");
                 
                 return user.IdToken;
             }

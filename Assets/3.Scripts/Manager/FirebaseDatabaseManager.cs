@@ -39,7 +39,7 @@ namespace Bird.Network.Managers
             try
             {
                 await _dbReference.Child(PATH_USERS).Child(uid).Child(PATH_NICKNAME).SetValueAsync(nickname);
-                Debug.Log($"[FirebaseDB] 닉네임 저장 성공! UID: {uid}, 닉네임: {nickname}");
+                // Debug.Log($"[FirebaseDB] 닉네임 저장 성공! UID: {uid}, 닉네임: {nickname}");
             }
             catch (Exception e)
             {
@@ -58,12 +58,12 @@ namespace Bird.Network.Managers
                 if (snapshot.Exists)
                 {
                     string loadedName = snapshot.Value.ToString();
-                    Debug.Log($"[FirebaseDB] 닉네임 불러오기 성공: {loadedName}");
+                    // Debug.Log($"[FirebaseDB] 닉네임 불러오기 성공: {loadedName}");
                     return loadedName;
                 }
                 else
                 {
-                    Debug.Log("[FirebaseDB] 등록된 닉네임이 없습니다.");
+                    // Debug.Log("[FirebaseDB] 등록된 닉네임이 없습니다.");
                     return string.Empty;
                 }
             }

@@ -11,6 +11,7 @@ namespace Bird.Network.Data
     {
         public List<BirdPropData> AllProps;
 
+        // public BirdPropData GetPropByID(int id) => AllProps.FirstOrDefault(p => p.PropID == id);
         public BirdPropData GetPropByID(int id)
         {
             foreach (var prop in AllProps)
@@ -19,8 +20,6 @@ namespace Bird.Network.Data
             }
             return null;
         }
-        
-        // public BirdPropData GetPropByID(int id) => AllProps.FirstOrDefault(p => p.PropID == id);
         
         public BirdPropData GetRandomProp() => AllProps[Random.Range(0, AllProps.Count)];
 
@@ -49,19 +48,5 @@ namespace Bird.Network.Data
 
             return result;
         }
-
-        /*
-        public List<BirdPropData> GetRandomUniqueProps(int count, List<int> excludeIDs = null)
-        {
-            var query = AllProps.AsEnumerable();
-
-            if (excludeIDs != null && excludeIDs.Count > 0)
-            {
-                query = query.Where(p => !excludeIDs.Contains(p.PropID));
-            }
-            
-            return query.OrderBy(x => Guid.NewGuid()).Take(count).ToList();
-        }
-        */
     }
 }

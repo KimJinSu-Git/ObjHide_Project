@@ -11,7 +11,6 @@ namespace Bird.Network.Data
 
         public Sprite PropIcon;
         
-        // public GameObject PropPrefab;
         public AssetReferenceGameObject PropPrefabRef; // 실제 사물 모델링 
 
         public int MaxHP; // 사물에 따라 적용될 체력

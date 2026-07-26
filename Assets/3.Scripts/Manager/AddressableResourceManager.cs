@@ -20,7 +20,7 @@ namespace Bird.Network.Managers
 
             if (totalSize > 0)
             {
-                Debug.Log($"[ResourceManager] '{label}' 다운로드 필요 : {totalSize} Bytes");
+                // Debug.Log($"[ResourceManager] '{label}' 다운로드 필요 : {totalSize} Bytes");
                 
                 // 실제 다운로드 시작
                 var downloadHandle = Addressables.DownloadDependenciesAsync(label);
@@ -36,7 +36,7 @@ namespace Bird.Network.Managers
 
                 if (downloadHandle.Status == AsyncOperationStatus.Succeeded)
                 {
-                    Debug.Log($"[ResourceManager] '{label} 다운로드 및 캐싱 완료");
+                    // Debug.Log($"[ResourceManager] '{label} 다운로드 및 캐싱 완료");
                 }
                 
                 Addressables.Release(downloadHandle);
@@ -44,7 +44,7 @@ namespace Bird.Network.Managers
             else
             {
                 onProgress?.Invoke(1.0f, 0, 0);
-                Debug.Log($"[ResourceManager] '{label} 이미 로컬에 최신 버전이 있습니다.");
+                // Debug.Log($"[ResourceManager] '{label} 이미 로컬에 최신 버전이 있습니다.");
             }
             
             Addressables.Release(sizeHandle);

@@ -81,7 +81,7 @@ namespace Bird.Network.UI
 
         private void OnLobbyButtonClicked()
         {
-            Debug.Log("[Bird] 로비로 돌아갑니다.");
+            // Debug.Log("[Bird] 로비로 돌아갑니다.");
             
             if (BirdGameManager.Instance != null && BirdGameManager.Instance.Runner != null)
             {
@@ -91,13 +91,6 @@ namespace Bird.Network.UI
             {
                 NetworkRunner.Instances[0].Shutdown();
             }
-            /*
-            var runner = FindObjectOfType<NetworkRunner>();
-            if (runner != null)
-            {
-                runner.Shutdown();
-            }
-            */
         }
 
         private void CloseUI()
