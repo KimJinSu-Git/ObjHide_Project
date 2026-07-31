@@ -1,19 +1,18 @@
-# 📌 Unity 3D 멀티플레이어 사물 숨바꼭질 – Prop Hunt (Project Bird-Net)
+# 📌 Unity 3D 멀티플레이어 사물 숨바꼭질 – Prop Hunt
 
-🛠 **개발 도구**: Unity 6000.0.65f1, C#, JetBrains Rider
+🛠 **개발 도구**: Unity 6000.0.65f1, C#, JetBrains Rider <br>
 🌐 **핵심 기술**: Photon Fusion (State Authority, RPC), Firebase (Auth/DB)
 
 ---
 
-Prop Hunt는 카스 온라인의 사물 숨바꼭질 모드를 모티브로 한 3D 모바일 네트워크 게임입니다.
-플레이어는 사물(Prop)로 변신하여 맵 곳곳에 숨고, 술래는 이를 찾아내어 잡아내는 플레이를 즐기실 수 있습니다.
+Prop Hunt는 카스 온라인의 사물 숨바꼭질 모드를 모티브로 한 3D 모바일 네트워크 게임입니다. <br>
+플레이어는 사물(Prop)로 변신하여 맵 곳곳에 숨고, 술래는 이를 찾아내어 잡아내는 플레이를 즐기실 수 있습니다. <br>
 Photon Fusion의 **클라이언트 예측(Client Prediction)**과 **서버 권한(Server Authority)** 모델을 기반으로, 모바일 환경에서도 쾌적한 멀티플레이 동기화를 구현했습니다.
 
 ---
 
 ## 📸 인게임 이미지
 <p align="center">
-  <img src="이미지_링크_입력" width="220"/> &nbsp; &nbsp;
   <img src="이미지_링크_입력" width="220"/> &nbsp; &nbsp;
   <img src="이미지_링크_입력" width="220"/>
 </p>
@@ -24,12 +23,12 @@ Photon Fusion의 **클라이언트 예측(Client Prediction)**과 **서버 권�
 
 ### 🧩 전체 시스템 구조 및 네트워크 (Architecture & Network)
 * **SRP 기반 플레이어 아키텍처**
-  * 비대해지기 쉬운 Player 클래스를 역할에 따라 5개(Controller, Health, Combat, Visual, Camera)로 분리하여 유지보수성을 극대화했습니다.
+  * 비대해지기 쉬운 Player 클래스를 역할에 따라 5개(Identity, Health, Combat, Visual, Camera)로 분리하였습니다.
 * **클라이언트 예측 및 서버 권한 동기화**
   * 이동 및 물리 연산은 `NetworkCharacterController`를 통해 클라이언트에서 즉각 예측하여 부드럽게 렌더링합니다. 반면, 승패 판정이나 체력(HP) 등의 중요 데이터는 **서버(Host)에서만 조작(State Authority)하여 클라이언트의 비정상적인 데이터 수정을 원천 차단(보안)**했습니다.
 * **효율적인 RPC(Remote Procedure Call) 분리**
-  * 상태 저장이 필요한 데이터는 `[Networked]` 변수로 관리하고, 사격 처리나 킬 로그 알림처럼 즉발적인 데이터는 RPC로 분리하여 네트워크 트래픽을 최적화했습니다.
-  * 💡`[Networked]` 변수가 모두가 함께 보는 '공용 게시판'이라면, RPC는 멀리 떨어진 친구(서버/타 클라이언트)에게 전화를 걸어 "이 총알 궤적 좀 계산해 줘!"라고 1회성 요청을 보내는 것과 같습니다.*
+  * 상태 저장이 필요한 데이터는 `[Networked]` 변수로 관리하고, 사격 처리나 킬 로그 알림처럼 즉발적인 데이터는 RPC로 분리하여 네트워크 트래픽을 최적화했습니다. <br>
+💡`[Networked]` 변수가 모두가 함께 보는 '공용 게시판'이라면, RPC는 멀리 떨어진 친구(서버/타 클라이언트)에게 전화를 걸어 "이 총알 궤적 좀 계산해 줘!"라고 1회성 요청을 보내는 것과 같습니다.*
 * **안정적인 백엔드 파이프라인 (`async/await`)**
   * Firebase 익명 로그인 및 DB 연동 시 `async/await` 패턴을 적극 활용하여 콜백 지옥을 방지하고, 메인 스레드 프리징을 차단했습니다.
   * 모바일 환경의 네트워크 불안정에 대비해 Addressables 통신 구간에 방어적 예외 처리(`try-catch`)를 적용, 에러 발생 시에도 무한 대기에 빠지지 않고 안정적인 로딩 흐름을 구축했습니다.
@@ -38,8 +37,8 @@ Photon Fusion의 **클라이언트 예측(Client Prediction)**과 **서버 권�
 * **전략 패턴(Strategy Pattern) 기반 카메라 스와핑**
   * 복잡한 `if-else` 분기문 없이, 런타임에 `ICameraStrategy` 객체만 교체하여 술래(FPS), 도망자(TPS), 잠금 시점(FreeLook)을 유연하게 제어합니다.
 * **구조체(Struct)를 활용한 GC 차단**
-  * 매 프레임 호출되는 카메라 연산에 참조 타입(Class) 대신 **값 타입(`struct CameraUpdateParams`)을 사용하여, 힙 메모리 할당(`new`)으로 인한 가비지 컬렉터(GC) 발생을 차단**했습니다.
-  * 💡`Update` 내에서 매 프레임 `new` 키워드로 클래스를 생성하면 메모리에 쓰레기가 쌓이고, 쓰레기차가 이를 치울 때(GC) 게임 프레임이 뚝 끊기는 버벅임(Spike)이 발생합니다. 값 타입인 구조체를 사용하면 이 쓰레기 자체가 생기지 않아 성능이 향상됩니다.*
+  * 매 프레임 호출되는 카메라 연산에 참조 타입(Class) 대신 **값 타입(`struct CameraUpdateParams`)을 사용하여, 힙 메모리 할당(`new`)으로 인한 가비지 컬렉터(GC) 발생을 차단**했습니다.<br>
+💡`Update` 내에서 매 프레임 `new` 키워드로 클래스를 생성하면 메모리에 쓰레기가 쌓이고, 쓰레기차가 이를 치울 때(GC) 게임 프레임이 뚝 끊기는 버벅임(Spike)이 발생합니다. 값 타입인 구조체를 사용하면 이 쓰레기 자체가 생기지 않아 성능이 향상됩니다.*
 
 ### 🗂️ 데이터 주도 설계 기반 사물 시스템 (Data-Driven Prop System)
 * **Scriptable Object & Addressables 연동**
