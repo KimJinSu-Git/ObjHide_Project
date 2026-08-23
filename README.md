@@ -13,8 +13,8 @@ Photon Fusion의 클라이언트 예측(Client Prediction)과 서버 권한(Serv
 
 ## 📸 인게임 이미지
 <p align="center">
-  <img src="이미지_링크_입력" width="220"/> &nbsp; &nbsp;
-  <img src="이미지_링크_입력" width="220"/>
+  <img src="https://github.com/KimJinSu-Git/ObjHide_Project/blob/main/Assets/4.Sprites/InGameImage/GameScreenShot1.png" width="450"/> &nbsp; &nbsp;
+  <img src="https://github.com/KimJinSu-Git/ObjHide_Project/blob/main/Assets/4.Sprites/InGameImage/GameScreenShot2.png" width="450"/>
 </p>
 
 ---
