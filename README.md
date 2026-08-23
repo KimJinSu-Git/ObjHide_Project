@@ -13,8 +13,8 @@ Photon Fusion의 클라이언트 예측(Client Prediction)과 서버 권한(Serv
 
 ## 📸 인게임 이미지
 <p align="center">
-  <img src="https://github.com/KimJinSu-Git/ObjHide_Project/blob/main/Assets/4.Sprites/InGameImage/GameScreenShot1.png" width="450"/> &nbsp; &nbsp;
-  <img src="https://github.com/KimJinSu-Git/ObjHide_Project/blob/main/Assets/4.Sprites/InGameImage/GameScreenShot2.png" width="450"/>
+  <img src="https://github.com/KimJinSu-Git/ObjHide_Project/blob/main/Assets/4.Sprites/InGameImage/GameScreenShot1.png" width="350"/> &nbsp; &nbsp;
+  <img src="https://github.com/KimJinSu-Git/ObjHide_Project/blob/main/Assets/4.Sprites/InGameImage/GameScreenShot2.png" width="350"/>
 </p>
 
 ---
@@ -65,5 +65,5 @@ Photon Fusion의 클라이언트 예측(Client Prediction)과 서버 권한(Serv
   * `Update` 루프 내에서의 무거운 객체 탐색 함수(`FindAnyObjectByType` 등)나 텍스트 갱신을 차단했습니다. 대신 C# `Action` (예: 체력 변화, 생존자 수 변화) 이벤트가 발생할 때만 UI 로직이 실행되도록 옵저버 패턴을 적용했습니다.
 
 ---
-* 🎥 **플레이 영상**: `[유튜브 링크 입력]`
-* 📄 **기술 포트폴리오 PDF**: `[포트폴리오 링크 입력]`
+* 🎥 **플레이 영상**: [PropHunt.mp4](https://drive.google.com/file/d/11p0q4vFYWlyrRhROs4szlgtTZm2XnifO/view?usp=drive_link)
+* 📄 **기술 포트폴리오 PDF**: [PropHunt.pdf](https://drive.google.com/file/d/1FT39mYh4aQz9DiQmvP7rod_vDx2agB8m/view?usp=drive_link)
